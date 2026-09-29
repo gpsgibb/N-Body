@@ -7,6 +7,9 @@
 
 typedef std::array<double, 2> tuple;
 
+const double MAC_CONDITION = 0.5;
+const double SMOOTHING_SIZE = 1E-3;
+
 template<std::size_t NDIM>
 struct TreeNode{
     std::size_t idx;
@@ -15,6 +18,7 @@ struct TreeNode{
     double mass;
     std::array<double, NDIM> centre_of_mass;
     double size;
+    std::array<tuple, NDIM> bounding_box;
 };
 
 
@@ -28,9 +32,11 @@ class KDTree{
     public:
         KDTree(std::vector<Particle<NDIM>> &pars);
         void construct_tree();
+        std::array<double, NDIM> evaluate_force(std::size_t ind);
 
     private:
         int create_node(int &index, int start, int stop, int dim, std::array<tuple, NDIM> bounds);
+        std::array<double, NDIM> calc_force_from_node(std::size_t node_idx, std::size_t par_idx);
 };
 
 # endif

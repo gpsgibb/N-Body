@@ -2,6 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include "kdtree.hpp"
+#include <cmath>
 
 // sort indices (inplace) according to the positions of particles in the requested dimension
 template<std::size_t NDIM>
@@ -59,6 +60,19 @@ double bounding_box_size(std::array<tuple, NDIM> box){
 }
 
 
+// checks if particle is contained by a bounding box
+template<std::size_t NDIM>
+bool contained_by_bounding_box(std::array<tuple, NDIM> box, std::array<double, NDIM> pos){
+    bool is_contained = 1;
+    for (std::size_t i=0;i<NDIM;i++){
+        is_contained &= (pos[i] >= box[i][0]) & (pos[i] <= box[i][1]);
+    }
+
+    return is_contained;
+}
+
+
+// KDTree initialiser
 template<std::size_t NDIM>
 KDTree<NDIM>::KDTree(std::vector<Particle<NDIM>> &pars): particles(pars) {
     std::size_t n = particles.size();
@@ -74,6 +88,7 @@ KDTree<NDIM>::KDTree(std::vector<Particle<NDIM>> &pars): particles(pars) {
 }
 
 
+// Construct the tree structure
 template<std::size_t NDIM>
 void KDTree<NDIM>::construct_tree(){
     int node_idx = 0;
@@ -104,6 +119,7 @@ void KDTree<NDIM>::construct_tree(){
 }
 
 
+// Create the node of a tree (recursively creating all child nodes if required)
 template<std::size_t NDIM>
 int KDTree<NDIM>::create_node(int &idx, int start, int stop, int dim, std::array<tuple, NDIM> bounds){
 
@@ -122,6 +138,7 @@ int KDTree<NDIM>::create_node(int &idx, int start, int stop, int dim, std::array
     int myidx = idx;
     int particle_index = indices[start + n/2];
 
+    node.bounding_box = bounds;
     node.dim = dim;
     node.idx = particle_index;
 
@@ -173,6 +190,71 @@ int KDTree<NDIM>::create_node(int &idx, int start, int stop, int dim, std::array
     }
 
     return myidx;
+}
+
+
+// Calculate the force on the ith particle from all other particles using the KDTree
+template<std::size_t NDIM>
+std::array<double, NDIM> KDTree<NDIM>::evaluate_force(std::size_t i){
+    return calc_force_from_node(0, i);
+}
+
+
+// Calculate the force on particle par_idx from node node_idx. The function is called recursively to evaluate the force
+template<std::size_t NDIM>
+std::array<double, NDIM> KDTree<NDIM>::calc_force_from_node(std::size_t node_idx, std::size_t par_idx){
+    std::array<double, NDIM> force = {}, r;
+    TreeNode node = nodes[node_idx];
+    Particle par = particles[par_idx];
+    double dist=0;
+    bool mac, self, contained;
+
+    contained = contained_by_bounding_box(node.bounding_box, par.pos);
+
+    for (std::size_t i=0;i<NDIM;i++){
+        r[i] = par.pos[i] - node.centre_of_mass[i];
+        dist += r[i]*r[i];
+    }
+    dist = sqrt(dist);
+
+    mac = (node.size / dist) > MAC_CONDITION;
+    self = node.idx == par_idx;
+
+    if (self || mac || contained){
+        // go down tree
+        std::array<double, NDIM> f1 = {}, f2 = {};
+        if (node.lower >= 0) f1 = calc_force_from_node(node.lower, par_idx);
+        if (node.upper >= 0) f2 = calc_force_from_node(node.upper, par_idx);
+
+        for (std::size_t i=0;i<NDIM;i++){
+            force[i] = f1[i] + f2[i];
+        }
+
+        // child nodes do not contain the particle represented by this node, so need to explicitly
+        // include it in the force calculation
+        if (!self){
+            dist = 0;
+            for (std::size_t i=0;i<NDIM;i++){
+                r[i] = par.pos[i] - particles[node.idx].pos[i];
+                dist += r[i]*r[i];
+            }
+            dist = sqrt(dist);
+            double distcubed = pow(dist + SMOOTHING_SIZE, 3);
+            for (std::size_t i=0;i<NDIM;i++){
+                force[i] += particles[node.idx].mass* r[i] / distcubed;
+            }
+        }
+    } else {
+        // evaluate force from this node and exit
+        // f = M r / (|r|+a)**3
+        double distcubed = pow(dist + SMOOTHING_SIZE, 3);
+        for (std::size_t i=0;i<NDIM;i++){
+            force[i] = node.mass * r[i] / distcubed;
+        }
+    }
+
+    return force;
+
 }
 
 

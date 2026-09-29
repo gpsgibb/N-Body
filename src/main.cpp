@@ -22,7 +22,20 @@ int main(int argc, char** argv){
     t0 = omp_get_wtime();
     KDTree<3> tree(s2.particles);
     t1 = omp_get_wtime();
-    std::cout << "Time taken " << t1-t0 << "s\n";
+    std::cout << "Construction time taken " << t1-t0 << "s\n";
+
+    // get forces
+    t0 = omp_get_wtime();
+    #pragma omp parallel
+    {
+        std::array<double, 3> force;
+        #pragma omp for
+        for (std::size_t i=0; i<s2.particles.size(); i++){
+            force = tree.evaluate_force(i);
+        }
+    }
+    t1 = omp_get_wtime();
+    std::cout << "Force time taken " << t1-t0 << "s\n";
 
     return 0;
 
