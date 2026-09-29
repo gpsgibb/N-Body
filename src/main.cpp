@@ -9,9 +9,10 @@ int main(int argc, char** argv){
     int n = 1000000;
 
     State<3> s2(n);
-    for (int i=0;i<s2.particles.size();i++){
+    for (std::size_t i=0;i<s2.particles.size();i++){
         s2.particles[i].pos[0] = i;
-        s2.particles[i].pos[1] = n-i;
+        s2.particles[i].pos[1] = n-i-1;
+        s2.particles[i].mass = 1.0;
     }
 
     double t0, t1;

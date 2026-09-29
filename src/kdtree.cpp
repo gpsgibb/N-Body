@@ -38,9 +38,29 @@ KDTree<NDIM>::KDTree(std::vector<Particle<NDIM>> &pars): particles(pars) {
 
 template<std::size_t NDIM>
 void KDTree<NDIM>::construct_tree(){
-    int node_ptr = 0;
+    int node_idx = 0;
 
-    create_node(node_ptr, 0, indices.size(), 0);
+    // Create root node (which recursively creates all other nodes)
+    create_node(node_idx, 0, indices.size(), 0);
+
+    // Each node's centre of mass currently contains sum(pos*m), so divide sum(pos*m) by sum(m) to
+    // get the centre of mass
+    for (TreeNode<NDIM> &node: nodes){
+        for (std::size_t i=0; i<NDIM;i++){
+            node.centre_of_mass[i] /= node.mass;
+        }
+    }
+
+    // sanity checking
+    long n = 0;
+    for (TreeNode node: nodes){
+        n += node.idx;
+    }
+    std::cout << "Sum of and theoretical sum of indices ";
+    std::cout << n << " " << nodes.size() * (nodes.size()-1) / 2 << "\n";
+
+    std::cout << "Total mass " << nodes[0].mass << "\n";
+    std::cout << "Centre of mass " << nodes[0].centre_of_mass[0] << " " << nodes[0].centre_of_mass[1] << " " <<nodes[0].centre_of_mass[2] <<"\n";
 
 }
 
@@ -49,30 +69,54 @@ template<std::size_t NDIM>
 int KDTree<NDIM>::create_node(int &idx, int start, int stop, int dim){
 
     int n = stop - start;
-    int myidx = idx;
-    int particle_index = start + n/2;
-    int lstop, ustart;
-    int newdim = (dim+1) % NDIM;
+    TreeNode<NDIM> &node = nodes[idx];
 
     // no particles in node
     if (n == 0){
         return -1;
     }
 
+    // Sort the indices in the dimension of this node
     argsort(particles, indices, dim, start, stop);
 
-    nodes[myidx].dim = dim;
-    nodes[myidx].idx = particle_index;
-    // nodes[myidx].mass = ...
-    // nodes[myidx].centre_of_mass = ...
+    int myidx = idx;
+    int particle_index = indices[start + n/2];
 
-    idx += 1;
+    node.dim = dim;
+    node.idx = particle_index;
 
+    // initialise mass and centre of mass to be the mass of the object and the mass * pos
+    Particle mypar = particles[particle_index];
+    node.mass = mypar.mass;
+    for (std::size_t i=0; i<NDIM;i++){
+        node.centre_of_mass[i] = mypar.pos[i] * mypar.mass;
+    }
+
+    int lstop, ustart;
     lstop = start + n/2;
     ustart = start + n/2+1;
 
-    nodes[myidx].lower = create_node(idx, start, lstop, newdim);
-    nodes[myidx].upper = create_node(idx, ustart, stop, newdim);
+    // increment the index of the "next" node and create the child nodes
+    idx += 1;
+    int newdim = (dim+1) % NDIM;
+    node.lower = create_node(idx, start, lstop, newdim);
+    node.upper = create_node(idx, ustart, stop, newdim);
+
+    // Add the masses and centre of masses * mass of the child nodes
+    if (node.lower > 0){
+        TreeNode lower = nodes[node.lower];
+        node.mass += lower.mass;
+        for (std::size_t i=0; i<NDIM;i++){
+            node.centre_of_mass[i] += lower.centre_of_mass[i];
+        }
+    }
+    if (node.upper > 0){
+        TreeNode upper = nodes[node.upper];
+        node.mass += upper.mass;
+        for (std::size_t i=0; i<NDIM;i++){
+            node.centre_of_mass[i] += upper.centre_of_mass[i];
+        }
+    }
 
     return myidx;
 }
