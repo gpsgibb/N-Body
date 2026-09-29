@@ -2,16 +2,19 @@
 #include <omp.h>
 #include "state.hpp"
 #include "kdtree.hpp"
-
+#include <cstdlib>
 
 int main(int argc, char** argv){
 
-    int n = 1000000;
+    int n = 10000;
+
+    srand(0);
 
     State<3> s2(n);
     for (std::size_t i=0;i<s2.particles.size();i++){
-        s2.particles[i].pos[0] = i;
-        s2.particles[i].pos[1] = n-i-1;
+        s2.particles[i].pos[0] = ((double) rand())/RAND_MAX;
+        s2.particles[i].pos[1] = ((double) rand())/RAND_MAX;
+        s2.particles[i].pos[2] = ((double) rand())/RAND_MAX;
         s2.particles[i].mass = 1.0;
     }
 
