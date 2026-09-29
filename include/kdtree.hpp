@@ -2,8 +2,10 @@
 #define KDTREE_H
 
 #include <vector>
+#include <array>
 #include "particle.hpp"
 
+typedef std::array<double, 2> tuple;
 
 template<std::size_t NDIM>
 struct TreeNode{
@@ -12,6 +14,7 @@ struct TreeNode{
     int lower, upper;
     double mass;
     std::array<double, NDIM> centre_of_mass;
+    double size;
 };
 
 
@@ -27,7 +30,7 @@ class KDTree{
         void construct_tree();
 
     private:
-        int create_node(int &index, int start, int stop, int dim);
+        int create_node(int &index, int start, int stop, int dim, std::array<tuple, NDIM> bounds);
 };
 
 # endif
