@@ -8,6 +8,7 @@ struct Particle{
     double mass;
     std::array<double, NDIM> pos;
     std::array<double, NDIM> vel;
+    std::array<double, NDIM> acc;
 };
 
 #endif

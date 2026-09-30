@@ -3,6 +3,7 @@
 #include <algorithm>
 #include "kdtree.hpp"
 #include <cmath>
+#include <string>
 
 // sort indices (inplace) according to the positions of particles in the requested dimension
 template<std::size_t NDIM>
@@ -115,7 +116,11 @@ void KDTree<NDIM>::construct_tree(){
     std::cout << n << " " << nodes.size() * (nodes.size()-1) / 2 << "\n";
 
     std::cout << "Total mass " << nodes[0].mass << "\n";
-    std::cout << "Centre of mass " << nodes[0].centre_of_mass[0] << " " << nodes[0].centre_of_mass[1] << " " <<nodes[0].centre_of_mass[2] <<"\n";
+    std::cout << "Centre of mass ";
+    for (std::size_t i=0; i<NDIM;i++){
+        std::cout << nodes[0].centre_of_mass[i] << " ";
+    }
+    std::cout << "\n";
 }
 
 
@@ -164,6 +169,7 @@ int KDTree<NDIM>::create_node(int &idx, int start, int stop, int dim, std::array
     
     upperbounds = bounds;
     upperbounds[dim][0] = particles[indices[ustart]].pos[dim];
+    upperbounds[dim][0] = particles[indices[lstop]].pos[dim];
     node.upper = create_node(idx, ustart, stop, newdim, upperbounds);
 
     // Add the masses and centre of masses * mass of the child nodes
@@ -182,12 +188,7 @@ int KDTree<NDIM>::create_node(int &idx, int start, int stop, int dim, std::array
         }
     }
 
-    if (n==1){
-        node.size = 0.0;
-    } else {
-        // get size of the node: maximum distance from centre of mass to a corner of its bounding box
-        node.size = bounding_box_size<NDIM>(bounds);
-    }
+    node.size = bounding_box_size<NDIM>(bounds);
 
     return myidx;
 }
@@ -212,7 +213,7 @@ std::array<double, NDIM> KDTree<NDIM>::calc_force_from_node(std::size_t node_idx
     contained = contained_by_bounding_box(node.bounding_box, par.pos);
 
     for (std::size_t i=0;i<NDIM;i++){
-        r[i] = par.pos[i] - node.centre_of_mass[i];
+        r[i] = node.centre_of_mass[i] - par.pos[i];
         dist += r[i]*r[i];
     }
     dist = sqrt(dist);
@@ -235,7 +236,7 @@ std::array<double, NDIM> KDTree<NDIM>::calc_force_from_node(std::size_t node_idx
         if (!self){
             dist = 0;
             for (std::size_t i=0;i<NDIM;i++){
-                r[i] = par.pos[i] - particles[node.idx].pos[i];
+                r[i] = particles[node.idx].pos[i] - par.pos[i];
                 dist += r[i]*r[i];
             }
             dist = sqrt(dist);
@@ -254,6 +255,25 @@ std::array<double, NDIM> KDTree<NDIM>::calc_force_from_node(std::size_t node_idx
     }
 
     return force;
+
+}
+
+
+// write the tree to file
+template<std::size_t NDIM>
+void KDTree<NDIM>::save_tree(std::string filename){
+    std::ofstream out(filename, std::ios::binary);
+    if (!out) {
+        std::cerr << "Failed to open file\n";
+        throw 1;
+    }
+
+    std::size_t ndim = NDIM, n=nodes.size(), size = sizeof(TreeNode<NDIM>);
+
+    out.write((char*) &ndim, sizeof(ndim));
+    out.write((char*) &n, sizeof(std::size_t));
+    out.write((char*) &size, sizeof(std::size_t));
+    out.write((char*) nodes.data(), nodes.size() * size);
 
 }
 

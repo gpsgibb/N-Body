@@ -4,6 +4,9 @@
 #include <vector>
 #include <array>
 #include "particle.hpp"
+#include <string>
+#include <fstream>
+#include <iostream>
 
 typedef std::array<double, 2> tuple;
 
@@ -33,6 +36,7 @@ class KDTree{
         KDTree(std::vector<Particle<NDIM>> &pars);
         void construct_tree();
         std::array<double, NDIM> evaluate_force(std::size_t ind);
+        void save_tree(std::string filename);
 
     private:
         int create_node(int &index, int start, int stop, int dim, std::array<tuple, NDIM> bounds);

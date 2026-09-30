@@ -3,39 +3,42 @@
 #include "state.hpp"
 #include "kdtree.hpp"
 #include <cstdlib>
+#include <vector>
 
 int main(int argc, char** argv){
 
-    int n = 10000;
+    int n = 1000;
 
     srand(0);
 
-    State<3> s2(n);
+    const std::size_t NDIM = 2;
+
+    State<NDIM> s2(n);
     for (std::size_t i=0;i<s2.particles.size();i++){
-        s2.particles[i].pos[0] = ((double) rand())/RAND_MAX;
-        s2.particles[i].pos[1] = ((double) rand())/RAND_MAX;
-        s2.particles[i].pos[2] = ((double) rand())/RAND_MAX;
+        for (std::size_t j=0;j<NDIM;j++){
+            s2.particles[i].pos[j] = ((double) rand())/RAND_MAX;
+        }
         s2.particles[i].mass = 1.0;
     }
 
     double t0, t1;
     t0 = omp_get_wtime();
-    KDTree<3> tree(s2.particles);
+    KDTree<NDIM> tree(s2.particles);
     t1 = omp_get_wtime();
     std::cout << "Construction time taken " << t1-t0 << "s\n";
 
     // get forces
     t0 = omp_get_wtime();
-    #pragma omp parallel
-    {
-        std::array<double, 3> force;
-        #pragma omp for
-        for (std::size_t i=0; i<s2.particles.size(); i++){
-            force = tree.evaluate_force(i);
+    #pragma omp parallel for
+    for (std::size_t i=0; i<s2.particles.size(); i++){
+            s2.particles[i].acc = tree.evaluate_force(i);
         }
-    }
+
     t1 = omp_get_wtime();
     std::cout << "Force time taken " << t1-t0 << "s\n";
+
+    tree.save_tree("tree.dat");
+    s2.save_state("state.dat");
 
     return 0;
 
