@@ -4,6 +4,7 @@
 #include "kdtree.hpp"
 #include <cstdlib>
 #include <vector>
+#include <integrator.hpp>
 
 int main(int argc, char** argv){
 
@@ -12,6 +13,7 @@ int main(int argc, char** argv){
     srand(0);
 
     const std::size_t NDIM = 2;
+    double dt = 0.001 * 0.03;
 
     State<NDIM> s2(n);
     for (std::size_t i=0;i<s2.particles.size();i++){
@@ -38,6 +40,13 @@ int main(int argc, char** argv){
     std::cout << "Force time taken " << t1-t0 << "s\n";
 
     tree.save_tree("tree.dat");
+    s2.save_state("state.dat");
+
+    EulerIntegrator<2> integrator(s2, dt);
+    for (int i=0; i<10000;i++){
+        std::cout << i << "\n";
+        integrator.step();
+    }
     s2.save_state("state.dat");
 
     return 0;
