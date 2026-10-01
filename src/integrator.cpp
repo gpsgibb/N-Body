@@ -15,21 +15,17 @@ void EulerIntegrator<NDIM>::step(){
 
     this->tree.construct_tree();
 
-    #pragma omp parallel
-    {
-        #pragma omp for
-        for (std::size_t i=0; i<particles.size();i++){
-            particles[i].acc = this->tree.evaluate_force(i);
-        }
+    #pragma omp parallel for
+    for (std::size_t i=0; i<particles.size();i++){
+        particles[i].acc = this->tree.evaluate_force(i);
+    }
 
-        #pragma omp for
-        for(Particle<NDIM> &par: particles){
-            for(std::size_t k=0;k<NDIM;k++){
-                par.vel[k] += par.acc[k]*this->dt;
-                par.pos[k] += par.vel[k]*this->dt;
-            }
+    // NOTE: OpenMP threading actually makes this loop slower
+    for(Particle<NDIM> &par: particles){
+        for(std::size_t k=0;k<NDIM;k++){
+            par.vel[k] += par.acc[k]*this->dt;
+            par.pos[k] += par.vel[k]*this->dt;
         }
-
     }
 
     this->state.t += this->dt;
