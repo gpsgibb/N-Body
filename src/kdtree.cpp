@@ -80,12 +80,26 @@ KDTree<NDIM>::KDTree(std::vector<Particle<NDIM>> &pars): particles(pars) {
 
     // initialise indices array
     indices.resize(n);
-    std::iota(indices.begin(), indices.end(), 0);
 
     // initialise nodes vector
     nodes.resize(n);
 
     construct_tree();
+
+    // sanity checking
+    n = 0;
+    for (TreeNode node: nodes){
+        n += node.idx;
+    }
+    std::cout << "Sum of and theoretical sum of indices ";
+    std::cout << n << " " << nodes.size() * (nodes.size()-1) / 2 << "\n";
+
+    std::cout << "Total mass " << nodes[0].mass << "\n";
+    std::cout << "Centre of mass ";
+    for (std::size_t i=0; i<NDIM;i++){
+        std::cout << nodes[0].centre_of_mass[i] << " ";
+    }
+    std::cout << "\n";
 }
 
 
@@ -93,6 +107,8 @@ KDTree<NDIM>::KDTree(std::vector<Particle<NDIM>> &pars): particles(pars) {
 template<std::size_t NDIM>
 void KDTree<NDIM>::construct_tree(){
     int node_idx = 0;
+
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::array<tuple, NDIM> bounds = minmax(particles);
 
@@ -107,20 +123,6 @@ void KDTree<NDIM>::construct_tree(){
         }
     }
 
-    // sanity checking
-    long n = 0;
-    for (TreeNode node: nodes){
-        n += node.idx;
-    }
-    std::cout << "Sum of and theoretical sum of indices ";
-    std::cout << n << " " << nodes.size() * (nodes.size()-1) / 2 << "\n";
-
-    std::cout << "Total mass " << nodes[0].mass << "\n";
-    std::cout << "Centre of mass ";
-    for (std::size_t i=0; i<NDIM;i++){
-        std::cout << nodes[0].centre_of_mass[i] << " ";
-    }
-    std::cout << "\n";
 }
 
 
