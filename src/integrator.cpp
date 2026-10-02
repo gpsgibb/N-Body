@@ -133,3 +133,85 @@ void VelocityVerletIntegrator<NDIM>::_step(double dt){
 
 template class VelocityVerletIntegrator<2>;
 template class VelocityVerletIntegrator<3>;
+
+
+template<std::size_t NDIM>
+AdaptiveTimestepEulerIntegrator<NDIM>::AdaptiveTimestepEulerIntegrator(
+    State<NDIM> &s, double dt
+): EulerIntegrator<NDIM>(s, dt)
+{
+    std::cout << "Initialising AdaptiveTimestepEulerIntegrator" << std::endl;
+}
+
+
+template<std::size_t NDIM>
+void AdaptiveTimestepEulerIntegrator<NDIM>::step(){
+    double stoptime = this->state.t + this->dt;
+    double dt_local;
+    int n_steps = 0;
+    while (this->state.t < stoptime){
+        dt_local = this->get_min_timestep();
+
+        if (dt_local < this->dt/SMALLEST_TIMESTEP_RATIO){
+            dt_local = this->dt/SMALLEST_TIMESTEP_RATIO;
+            std::cout << "WARNING: minimum timestep reached!" << std::endl;
+        }
+
+        if (dt_local > stoptime - this->state.t){
+            dt_local = stoptime - this->state.t;
+        }
+
+        // advance time forward by dt_local
+        this->_step(dt_local);
+
+        n_steps += 1;
+
+    }
+    std::cout << "Number of sub-timesteps = " << n_steps << std::endl;
+}
+
+
+template class AdaptiveTimestepEulerIntegrator<2>;
+template class AdaptiveTimestepEulerIntegrator<3>;
+
+
+
+
+template<std::size_t NDIM>
+AdaptiveTimestepVelocityVerletIntegrator<NDIM>::AdaptiveTimestepVelocityVerletIntegrator(
+    State<NDIM> &s, double dt
+): VelocityVerletIntegrator<NDIM>(s, dt)
+{
+    std::cout << "Initialising AdaptiveTimestepVelocityVerletIntegrator" << std::endl;
+}
+
+
+template<std::size_t NDIM>
+void AdaptiveTimestepVelocityVerletIntegrator<NDIM>::step(){
+    double stoptime = this->state.t + this->dt;
+    double dt_local;
+    int n_steps = 0;
+    while (this->state.t < stoptime){
+        dt_local = this->get_min_timestep();
+
+        if (dt_local < this->dt/SMALLEST_TIMESTEP_RATIO){
+            dt_local = this->dt/SMALLEST_TIMESTEP_RATIO;
+            std::cout << "WARNING: minimum timestep reached!" << std::endl;
+        }
+
+        if (dt_local > stoptime - this->state.t){
+            dt_local = stoptime - this->state.t;
+        }
+
+        // advance time forward by dt_local
+        this->_step(dt_local);
+
+        n_steps += 1;
+
+    }
+    std::cout << "Number of sub-timesteps = " << n_steps << std::endl;
+}
+
+
+template class AdaptiveTimestepVelocityVerletIntegrator<2>;
+template class AdaptiveTimestepVelocityVerletIntegrator<3>;

@@ -24,7 +24,7 @@ int main(int argc, char** argv){
         state.particles[i].mass = 1.0;
     }
 
-    VelocityVerletIntegrator<2> integrator(state, dt);
+    AdaptiveTimestepVelocityVerletIntegrator<2> integrator(state, dt);
     Iterator<2> iterator(state, integrator, 10000);
 
     iterator.start();

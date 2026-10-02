@@ -5,6 +5,7 @@
 #include <kdtree.hpp>
 
 const double TIMESTEP_ETA = 0.05;
+const int SMALLEST_TIMESTEP_RATIO = 1024;
 
 template<std::size_t NDIM>
 class Integrator{
@@ -29,8 +30,16 @@ template<std::size_t NDIM>
 class EulerIntegrator: public Integrator<NDIM>{
     public:
         EulerIntegrator(State<NDIM> &s, double dt);
-    private:
+    protected:
         void _step(double dt) override;
+};
+
+
+template<std::size_t NDIM>
+class AdaptiveTimestepEulerIntegrator: public EulerIntegrator<NDIM>{
+    public:
+        AdaptiveTimestepEulerIntegrator(State<NDIM> &s, double dt);
+        void step() override;
 };
 
 
@@ -40,8 +49,18 @@ class VelocityVerletIntegrator: public Integrator<NDIM>{
         std::vector<Particle<NDIM>> old_particles;
     public:
         VelocityVerletIntegrator(State<NDIM> &s, double dt);
-    private:
+    protected:
         void _step(double dt) override;
 };
+
+
+template<std::size_t NDIM>
+class AdaptiveTimestepVelocityVerletIntegrator: public VelocityVerletIntegrator<NDIM>{
+    public:
+        AdaptiveTimestepVelocityVerletIntegrator(State<NDIM> &s, double dt);
+        void step() override;
+};
+
+
 
 #endif
