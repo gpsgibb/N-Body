@@ -10,9 +10,7 @@ class Integrator{
         KDTree<NDIM> tree;
 
     public:
-        Integrator(State<NDIM> &s, double timestep): state(s), tree(s.particles) {
-            dt = timestep;
-        };
+        Integrator(State<NDIM> &s, double timestep);
         virtual void step() = 0;
 };
 
@@ -21,5 +19,15 @@ template<std::size_t NDIM>
 class EulerIntegrator: public Integrator<NDIM>{
     public:
         EulerIntegrator(State<NDIM> &s, double dt);
+        void step() override;
+};
+
+
+template<std::size_t NDIM>
+class VelocityVerletIntegrator: public Integrator<NDIM>{
+    private:
+        std::vector<Particle<NDIM>> old_particles;
+    public:
+        VelocityVerletIntegrator(State<NDIM> &s, double dt);
         void step() override;
 };
