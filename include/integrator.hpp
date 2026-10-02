@@ -4,6 +4,7 @@
 #include <state.hpp>
 #include <kdtree.hpp>
 
+const double TIMESTEP_ETA = 0.05;
 
 template<std::size_t NDIM>
 class Integrator{
@@ -15,6 +16,10 @@ class Integrator{
     public:
         Integrator(State<NDIM> &s, double timestep);
         virtual void step() = 0;
+
+    protected:
+        double timestep_for_particle(std::size_t i);
+        double get_min_timestep();
 };
 
 

@@ -17,6 +17,40 @@ Integrator<NDIM>::Integrator(State<NDIM> &s, double timestep): state(s), tree(s.
 };
 
 
+// get the timestep for particle i
+template<std::size_t NDIM>
+double Integrator<NDIM>::timestep_for_particle(std::size_t i){
+    Particle<NDIM> &par = state.particles[i];
+
+    // compute |acceleration| on particle
+    // (initialise to small non-zero value to avoid division by 0)
+    double acc = 1E-5;
+    for (std::size_t k=0; k<NDIM;k++){
+        acc += pow(par.acc[k], 2);
+    }
+    acc = sqrt(acc);
+
+    double rmin = tree.nearest_neighbour(i);
+
+    return TIMESTEP_ETA * sqrt(rmin / acc);
+}
+
+
+// get the minimum timestep across all particles
+template<std::size_t NDIM>
+double Integrator<NDIM>::get_min_timestep(){
+    double min_dt = INFINITY;
+
+    #pragma omp parallel for reduction(min: min_dt)
+    for (std::size_t i=0;i<state.particles.size();i++){
+        double par_dt = timestep_for_particle(i);
+        if (par_dt < min_dt) min_dt = par_dt; 
+    }
+
+    return min_dt;
+}
+
+
 template<std::size_t NDIM>
 EulerIntegrator<NDIM>::EulerIntegrator(State<NDIM> &s, double dt): Integrator<NDIM>(s, dt){
     std::cout << "Initialising EulerIntegrator\n";
