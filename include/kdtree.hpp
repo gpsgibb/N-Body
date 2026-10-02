@@ -17,7 +17,7 @@ template<std::size_t NDIM>
 struct TreeNode{
     std::size_t idx;
     int dim;
-    int lower, upper;
+    long lower, upper;
     double mass;
     std::array<double, NDIM> centre_of_mass;
     double size;
@@ -40,7 +40,7 @@ class KDTree{
         double nearest_neighbour(std::size_t i);
 
     private:
-        int create_node(int &index, int start, int stop, int dim, std::array<tuple, NDIM> bounds);
+        int create_node(std::size_t &index, std::size_t start, std::size_t stop, int dim, std::array<tuple, NDIM> bounds);
         std::array<double, NDIM> calc_force_from_node(std::size_t node_idx, std::size_t par_idx);
         double nearest_neighbour_from_node(std::size_t node_idx, std::size_t par_idx, double mindist);
 };

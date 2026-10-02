@@ -11,8 +11,8 @@ void argsort(
     std::vector<Particle<NDIM>> &particles,
     std::vector<std::size_t> &indices,
     int dim,
-    int start,
-    int stop
+    std::size_t start,
+    std::size_t stop
 ){
     sort(
         indices.begin()+start, indices.begin()+stop,
@@ -106,7 +106,7 @@ KDTree<NDIM>::KDTree(std::vector<Particle<NDIM>> &pars): particles(pars) {
 // Construct the tree structure
 template<std::size_t NDIM>
 void KDTree<NDIM>::construct_tree(){
-    int node_idx = 0;
+    std::size_t node_idx = 0;
 
     std::iota(indices.begin(), indices.end(), 0);
 
@@ -128,9 +128,9 @@ void KDTree<NDIM>::construct_tree(){
 
 // Create the node of a tree (recursively creating all child nodes if required)
 template<std::size_t NDIM>
-int KDTree<NDIM>::create_node(int &idx, int start, int stop, int dim, std::array<tuple, NDIM> bounds){
+int KDTree<NDIM>::create_node(std::size_t &idx, std::size_t start, std::size_t stop, int dim, std::array<tuple, NDIM> bounds){
 
-    int n = stop - start;
+    std::size_t n = stop - start;
 
     // no particles in node
     if (n == 0){
@@ -142,8 +142,8 @@ int KDTree<NDIM>::create_node(int &idx, int start, int stop, int dim, std::array
     // Sort the indices in the dimension of this node
     argsort(particles, indices, dim, start, stop);
 
-    int myidx = idx;
-    int particle_index = indices[start + n/2];
+    std::size_t myidx = idx;
+    std::size_t particle_index = indices[start + n/2];
 
     node.bounding_box = bounds;
     node.dim = dim;
@@ -156,7 +156,7 @@ int KDTree<NDIM>::create_node(int &idx, int start, int stop, int dim, std::array
         node.centre_of_mass[i] = mypar.pos[i] * mypar.mass;
     }
 
-    int lstop, ustart;
+    std::size_t lstop, ustart;
     lstop = start + n/2;
     ustart = start + n/2+1;
 
@@ -267,7 +267,7 @@ double KDTree<NDIM>::nearest_neighbour(std::size_t i){
     double mindist = INFINITY;
 
     // NOTE: This returns dist^2, so need to take the sqrt
-    mindist = >nearest_neighbour_from_node(0, i, mindist);
+    mindist = nearest_neighbour_from_node(0, i, mindist);
     mindist = sqrt(mindist);
 
     return mindist;
@@ -295,7 +295,7 @@ double KDTree<NDIM>::nearest_neighbour_from_node(std::size_t node_idx, std::size
     }
 
     // determine which of the child nodes the particle is in
-    int node_containing, node_adjacent;
+    long node_containing, node_adjacent;
     if (par.pos[dim] <= nodepar.pos[dim]){
         node_containing = node.lower;
         node_adjacent = node.upper;
