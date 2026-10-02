@@ -1,3 +1,6 @@
+#ifndef INTEGRATOR_H
+#define INTEGRATOR_H
+
 #include <state.hpp>
 #include <kdtree.hpp>
 
@@ -31,3 +34,5 @@ class VelocityVerletIntegrator: public Integrator<NDIM>{
         VelocityVerletIntegrator(State<NDIM> &s, double dt);
         void step() override;
 };
+
+#endif
