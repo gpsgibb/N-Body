@@ -261,6 +261,61 @@ std::array<double, NDIM> KDTree<NDIM>::calc_force_from_node(std::size_t node_idx
 }
 
 
+// Returns the distance to particle i's nearest neighbour
+template<std::size_t NDIM>
+double KDTree<NDIM>::nearest_neighbour(std::size_t i){
+    double mindist = INFINITY;
+
+    // NOTE: This returns dist^2, so need to take the sqrt
+    mindist = >nearest_neighbour_from_node(0, i, mindist);
+    mindist = sqrt(mindist);
+
+    return mindist;
+}
+
+
+// returns the nearest neighbour distance (squared) to particle par_idx from node node_idx
+template<std::size_t NDIM>
+double KDTree<NDIM>::nearest_neighbour_from_node(std::size_t node_idx, std::size_t par_idx, double mindist){
+    TreeNode node = nodes[node_idx];
+    Particle par = particles[par_idx];
+    Particle nodepar = particles[node.idx];
+    int dim = node.dim;
+
+    // distance between target particle and the particle associated with this node
+    double dist = 0;
+    for (std::size_t i=0;i<NDIM;i++){
+        dist += pow(par.pos[i] - nodepar.pos[i], 2);
+    }
+
+    // if this node is closer than the current mindist, update mindist
+    // UNLESS this node contains the target particle, in which case we ignore
+    if (par_idx != node.idx){
+        if (dist < mindist) mindist = dist;
+    }
+
+    // determine which of the child nodes the particle is in
+    int node_containing, node_adjacent;
+    if (par.pos[dim] <= nodepar.pos[dim]){
+        node_containing = node.lower;
+        node_adjacent = node.upper;
+    } else {
+        node_containing = node.upper;
+        node_adjacent = node.lower;
+    }
+
+    // search in containing node
+    if (node_containing > -1) mindist = nearest_neighbour_from_node(node_containing, par_idx, mindist);
+
+    // search in adjacent node if it is closer to the particle than the current mindist
+    double plane_dist = pow(par.pos[dim] - nodepar.pos[dim], 2);
+    if ((node_adjacent > -1) & (plane_dist < mindist)){
+        mindist = nearest_neighbour_from_node(node_adjacent, par_idx, mindist);
+    }
+
+    return mindist;
+}
+
 // write the tree to file
 template<std::size_t NDIM>
 void KDTree<NDIM>::save_tree(std::string filename){

@@ -37,10 +37,12 @@ class KDTree{
         void construct_tree();
         std::array<double, NDIM> evaluate_force(std::size_t ind);
         void save_tree(std::string filename);
+        double nearest_neighbour(std::size_t i);
 
     private:
         int create_node(int &index, int start, int stop, int dim, std::array<tuple, NDIM> bounds);
         std::array<double, NDIM> calc_force_from_node(std::size_t node_idx, std::size_t par_idx);
+        double nearest_neighbour_from_node(std::size_t node_idx, std::size_t par_idx, double mindist);
 };
 
 # endif
