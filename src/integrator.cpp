@@ -10,11 +10,17 @@ Integrator<NDIM>::Integrator(State<NDIM> &s, double timestep): state(s), tree(s.
 
     //Compute force on all particles
     // This is because all integrators assume the initial state is pos(t), vel(t), acc(t)
+    update_forces_for_all_particles();
+};
+
+
+template<std::size_t NDIM>
+void Integrator<NDIM>::update_forces_for_all_particles(){
     #pragma omp parallel for
-    for(std::size_t i=0;i<state.particles.size();i++){
+    for (std::size_t i=0;i<state.particles.size();i++){
         state.particles[i].acc = tree.evaluate_force(i);
     }
-};
+}
 
 
 // get the timestep for particle i
@@ -72,10 +78,7 @@ void EulerIntegrator<NDIM>::step(){
 
     // get a(t+dt)
     this->tree.construct_tree();
-    #pragma omp parallel for
-    for (std::size_t i=0; i<particles.size();i++){
-        particles[i].acc = this->tree.evaluate_force(i);
-    }
+    this->update_forces_for_all_particles();
 
     this->state.t += this->dt;
 
@@ -108,10 +111,7 @@ void VelocityVerletIntegrator<NDIM>::step(){
 
     // update forces (e.g. get a(t+dt))
     this->tree.construct_tree();
-    #pragma omp parallel for
-    for (std::size_t i=0; i<particles.size();i++){
-        particles[i].acc = this->tree.evaluate_force(i);
-    }
+    this->update_forces_for_all_particles();
 
     // v(t+dt) = v(t) + 0.5(a(t) + a(t+dt))
     for (std::size_t i=0;i<particles.size();i++){

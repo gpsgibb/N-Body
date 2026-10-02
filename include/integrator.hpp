@@ -18,6 +18,7 @@ class Integrator{
         virtual void step() = 0;
 
     protected:
+        void update_forces_for_all_particles();
         double timestep_for_particle(std::size_t i);
         double get_min_timestep();
 };
