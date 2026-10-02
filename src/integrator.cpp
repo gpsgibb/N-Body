@@ -1,6 +1,5 @@
 #include <integrator.hpp>
 #include <iostream>
-#include <omp.h>
 #include <cmath>
 
 
@@ -8,10 +7,18 @@ template<std::size_t NDIM>
 Integrator<NDIM>::Integrator(State<NDIM> &s, double timestep): state(s), tree(s.particles) {
     dt = timestep;
 
-    //Compute force on all particles
+    // Compute force on all particles
     // This is because all integrators assume the initial state is pos(t), vel(t), acc(t)
     update_forces_for_all_particles();
 };
+
+
+// Step the system of particles by one timestep
+// This can be overridden by child classes that use e.g. variable timesteps
+template<std::size_t NDIM>
+void Integrator<NDIM>::step(){
+    _step(dt);
+}
 
 
 template<std::size_t NDIM>
@@ -63,7 +70,7 @@ EulerIntegrator<NDIM>::EulerIntegrator(State<NDIM> &s, double dt): Integrator<ND
 }
 
 template<std::size_t NDIM>
-void EulerIntegrator<NDIM>::step(){
+void EulerIntegrator<NDIM>::_step(double dt){
 
     std::vector<Particle<NDIM>> &particles = this->state.particles;
 
@@ -71,8 +78,8 @@ void EulerIntegrator<NDIM>::step(){
     // x(t+dt) = x(t) + v(t+dt)*dt
     for(Particle<NDIM> &par: particles){
         for(std::size_t k=0;k<NDIM;k++){
-            par.vel[k] += par.acc[k]*this->dt;
-            par.pos[k] += par.vel[k]*this->dt;
+            par.vel[k] += par.acc[k]*dt;
+            par.pos[k] += par.vel[k]*dt;
         }
     }
 
@@ -80,7 +87,7 @@ void EulerIntegrator<NDIM>::step(){
     this->tree.construct_tree();
     this->update_forces_for_all_particles();
 
-    this->state.t += this->dt;
+    this->state.t += dt;
 
 }
 
@@ -96,7 +103,7 @@ VelocityVerletIntegrator<NDIM>::VelocityVerletIntegrator(State<NDIM> &s, double 
 
 
 template<std::size_t NDIM>
-void VelocityVerletIntegrator<NDIM>::step(){
+void VelocityVerletIntegrator<NDIM>::_step(double dt){
 
     std::vector<Particle<NDIM>> &particles = this->state.particles;
     // copy old particles as we need this info when computing the updated velocities
@@ -105,7 +112,7 @@ void VelocityVerletIntegrator<NDIM>::step(){
     // x(t+dt) = x(t) + v(t)*dt + 0.5*a(t)*dt^2 
     for(Particle<NDIM> &par: particles){
         for(std::size_t k=0;k<NDIM;k++){
-            par.pos[k] += par.vel[k]*this->dt + 0.5*par.acc[k]*pow(this->dt, 2);
+            par.pos[k] += par.vel[k]*dt + 0.5*par.acc[k]*pow(dt, 2);
         }
     }
 
@@ -116,11 +123,11 @@ void VelocityVerletIntegrator<NDIM>::step(){
     // v(t+dt) = v(t) + 0.5(a(t) + a(t+dt))
     for (std::size_t i=0;i<particles.size();i++){
         for(std::size_t k=0;k<NDIM;k++){
-            particles[i].vel[k] += 0.5*(particles[i].acc[k] + old_particles[i].acc[k])*this->dt;
+            particles[i].vel[k] += 0.5*(particles[i].acc[k] + old_particles[i].acc[k])*dt;
         }
     }
 
-    this->state.t += this->dt;
+    this->state.t += dt;
 
 }
 

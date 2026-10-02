@@ -15,9 +15,10 @@ class Integrator{
 
     public:
         Integrator(State<NDIM> &s, double timestep);
-        virtual void step() = 0;
+        virtual void step();
 
     protected:
+        virtual void _step(double dt) = 0;
         void update_forces_for_all_particles();
         double timestep_for_particle(std::size_t i);
         double get_min_timestep();
@@ -28,7 +29,8 @@ template<std::size_t NDIM>
 class EulerIntegrator: public Integrator<NDIM>{
     public:
         EulerIntegrator(State<NDIM> &s, double dt);
-        void step() override;
+    private:
+        void _step(double dt) override;
 };
 
 
@@ -38,7 +40,8 @@ class VelocityVerletIntegrator: public Integrator<NDIM>{
         std::vector<Particle<NDIM>> old_particles;
     public:
         VelocityVerletIntegrator(State<NDIM> &s, double dt);
-        void step() override;
+    private:
+        void _step(double dt) override;
 };
 
 #endif
