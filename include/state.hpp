@@ -12,10 +12,12 @@ template<std::size_t NDIM>
 class State{
     public:
         double t;
+        int it;
         std::vector<Particle<NDIM>> particles; 
     public: 
         State(int n){
             t = 0.0;
+            it = 0.0;
             particles.resize(n);
         }
 

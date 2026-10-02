@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <vector>
 #include <integrator.hpp>
+#include <iterator.hpp>
 
 int main(int argc, char** argv){
 
@@ -23,13 +24,11 @@ int main(int argc, char** argv){
         state.particles[i].mass = 1.0;
     }
 
-
     VelocityVerletIntegrator<2> integrator(state, dt);
-    //EulerIntegrator<2> integrator(state, dt);
-    for (int i=0; i<10000;i++){
-        std::cout << i << "\n";
-        integrator.step();
-    }
+    Iterator<2> iterator(state, integrator, 10000);
+
+    iterator.start();
+
     state.save_state("state.dat");
 
     return 0;
