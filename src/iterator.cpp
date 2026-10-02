@@ -4,17 +4,16 @@
 
 template<std::size_t NDIM>
 Iterator<NDIM>::Iterator(State<NDIM> &s, Integrator<NDIM> &intgrtr, int mxits): state(s), integrator(intgrtr) {
-    it = s.it;
     maxits = mxits;
 }
 
 
 template<std::size_t NDIM>
 void Iterator<NDIM>::start(){
-    while (it < maxits){
-        std::cout << "Step " << it << " of " << maxits << std::endl;
+    while (state.it < maxits){
+        std::cout << "Step " << state.it << " of " << maxits << std::endl;
         integrator.step();
-        it += 1;
+        state.it += 1;
     }
 }
 

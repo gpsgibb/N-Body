@@ -8,7 +8,7 @@
 template<std::size_t NDIM>
 class Iterator{
     private:
-        int maxits, it;
+        int maxits;
         State<NDIM> &state;
         Integrator<NDIM> &integrator;
     
