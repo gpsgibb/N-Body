@@ -4,7 +4,10 @@
 #include <state.hpp>
 #include <kdtree.hpp>
 
+// Parameter to control the minimum timestep. Smaller = shorter timestep
 const double TIMESTEP_ETA = 0.05;
+
+// ratio of Integrator's timestep and the minimum allowed timestep
 const int SMALLEST_TIMESTEP_RATIO = 1024;
 
 template<std::size_t NDIM>
