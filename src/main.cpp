@@ -13,7 +13,7 @@ int main(int argc, char** argv){
 
     srand(0);
 
-    const std::size_t NDIM = 2;
+    const std::size_t NDIM = 3;
     double dt = 0.001 * 0.03;
 
     State<NDIM> state(n);
@@ -24,8 +24,8 @@ int main(int argc, char** argv){
         state.particles[i].mass = 1.0;
     }
 
-    AdaptiveTimestepVelocityVerletIntegrator<2> integrator(state, dt);
-    Iterator<2> iterator(state, integrator, 10000);
+    AdaptiveTimestepVelocityVerletIntegrator<NDIM> integrator(state, dt);
+    Iterator<NDIM> iterator(state, integrator, 10000);
 
     iterator.start();
 
