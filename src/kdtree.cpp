@@ -137,7 +137,7 @@ int KDTree<NDIM>::create_node(std::size_t &idx, std::size_t start, std::size_t s
         return -1;
     }
 
-    TreeNode<NDIM> &node = nodes[idx];
+    TreeNode<NDIM> &node = nodes.at(idx);
 
     // Sort the indices in the dimension of this node
     argsort(particles, indices, dim, start, stop);
@@ -314,6 +314,28 @@ double KDTree<NDIM>::nearest_neighbour_from_node(std::size_t node_idx, std::size
     }
 
     return mindist;
+}
+
+
+template<std::size_t NDIM>
+void KDTree<NDIM>::reorder_particles(){
+
+    std::size_t n = particles.size();
+
+    // get indices of particles as they appear in the tree
+    std::vector<std::size_t> tree_indices;
+    tree_indices.reserve(n);
+    for (TreeNode<NDIM> node: nodes){
+        tree_indices.push_back(node.idx);
+    }
+
+    // reorder particles to be in that order, and update the nodes' particle indidces to match
+    std::vector<Particle<NDIM>> particles_copy = particles;
+    for (std::size_t i=0;i<n;i++){
+        particles[i] = particles_copy[tree_indices[i]];
+        nodes[i].idx = i;
+    }
+
 }
 
 // write the tree to file
