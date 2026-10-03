@@ -38,6 +38,7 @@ class KDTree{
         std::array<double, NDIM> evaluate_force(std::size_t ind);
         void save_tree(std::string filename);
         double nearest_neighbour(std::size_t i);
+        void reorder_particles();
 
     private:
         int create_node(std::size_t &index, std::size_t start, std::size_t stop, int dim, std::array<tuple, NDIM> bounds);
