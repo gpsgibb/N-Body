@@ -349,6 +349,55 @@ void KDTree<NDIM>::reorder_particles(){
 
 }
 
+
+template<std::size_t NDIM>
+void KDTree<NDIM>::update_centre_of_mass(){
+    // this puts sum(m*x) into the centre of mass fields
+    update_node_centre_of_mass(0);
+
+    // divide by mass of node to get centre of mass
+    for (TreeNode<NDIM> &node: nodes){
+        for (std::size_t k=0;k<NDIM;k++){
+            node.centre_of_mass[k] /= node.mass;
+        }
+    }
+}
+
+
+// return centre of mass (* total mass) of node idx
+template<std::size_t NDIM>
+std::array<double, NDIM> KDTree<NDIM>::update_node_centre_of_mass(std::size_t idx){
+    TreeNode<NDIM> &node = nodes[idx];
+
+    // compute own node particle's centre of mass
+    Particle<NDIM> par = particles[node.idx];
+    std::array<double, NDIM> mycom;
+    for (std::size_t k=0;k<NDIM;k++){
+        mycom[k] = par.pos[k] * par.mass;
+    }
+
+    //get centre of masses of children and sum
+    std::array<double, NDIM> childcom;
+
+    if (node.lower >= 0){
+        childcom = update_node_centre_of_mass(node.lower);
+        for (std::size_t k=0;k<NDIM;k++){
+            mycom[k] += childcom[k];
+        }
+    }
+
+    if (node.upper >= 0){
+        childcom = update_node_centre_of_mass(node.upper);
+        for (std::size_t k=0;k<NDIM;k++){
+            mycom[k] += childcom[k];
+        }
+    }
+
+    node.centre_of_mass = mycom;
+    return mycom;
+}
+
+
 // write the tree to file
 template<std::size_t NDIM>
 void KDTree<NDIM>::save_tree(std::string filename){
