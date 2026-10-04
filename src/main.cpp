@@ -6,6 +6,7 @@
 #include <vector>
 #include <integrator.hpp>
 #include <iterator.hpp>
+#include "forces.hpp"
 
 int main(int argc, char** argv){
 
@@ -24,7 +25,10 @@ int main(int argc, char** argv){
         state.particles[i].mass = 1.0;
     }
 
-    AdaptiveTimestepVelocityVerletIntegrator<NDIM> integrator(state, dt);
+
+    KDTree<NDIM> tree(state.particles);
+    KDTreeGravForce<NDIM> force(state.particles, tree);
+    AdaptiveTimestepVelocityVerletIntegrator<NDIM> integrator(state, force, dt);
     Iterator<NDIM> iterator(state, integrator, 10000);
 
     iterator.start();

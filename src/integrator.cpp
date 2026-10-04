@@ -4,7 +4,7 @@
 
 
 template<std::size_t NDIM>
-Integrator<NDIM>::Integrator(State<NDIM> &s, double timestep): state(s), tree(s.particles) {
+Integrator<NDIM>::Integrator(State<NDIM> &s, Force<NDIM> &force, double timestep): state(s), force(force) {
     dt = timestep;
 
     // Compute force on all particles
@@ -25,7 +25,7 @@ template<std::size_t NDIM>
 void Integrator<NDIM>::update_forces_for_all_particles(){
     #pragma omp parallel for
     for (std::size_t i=0;i<state.particles.size();i++){
-        state.particles[i].acc = tree.evaluate_force(i);
+        state.particles[i].acc = force.get_force(i);
     }
 }
 
@@ -43,7 +43,7 @@ double Integrator<NDIM>::timestep_for_particle(std::size_t i){
     }
     acc = sqrt(acc);
 
-    double rmin = tree.nearest_neighbour(i);
+    double rmin = force.get_interaction_lengthscale(i);
 
     return TIMESTEP_ETA * sqrt(rmin / acc);
 }
@@ -65,7 +65,7 @@ double Integrator<NDIM>::get_min_timestep(){
 
 
 template<std::size_t NDIM>
-EulerIntegrator<NDIM>::EulerIntegrator(State<NDIM> &s, double dt): Integrator<NDIM>(s, dt){
+EulerIntegrator<NDIM>::EulerIntegrator(State<NDIM> &s, Force<NDIM> &f, double dt): Integrator<NDIM>(s, f, dt){
     std::cout << "Initialising EulerIntegrator\n";
 }
 
@@ -84,7 +84,7 @@ void EulerIntegrator<NDIM>::_step(double dt){
     }
 
     // get a(t+dt)
-    this->tree.construct_tree();
+    this->force.full_update();
     this->update_forces_for_all_particles();
 
     this->state.t += dt;
@@ -97,7 +97,7 @@ template class EulerIntegrator<3>;
 
 
 template<std::size_t NDIM>
-VelocityVerletIntegrator<NDIM>::VelocityVerletIntegrator(State<NDIM> &s, double dt): Integrator<NDIM>(s, dt){
+VelocityVerletIntegrator<NDIM>::VelocityVerletIntegrator(State<NDIM> &s, Force<NDIM> &f, double dt): Integrator<NDIM>(s, f, dt){
     std::cout << "Initialising VelocityVerletIntegrator\n";
 }
 
@@ -117,7 +117,7 @@ void VelocityVerletIntegrator<NDIM>::_step(double dt){
     }
 
     // update forces (e.g. get a(t+dt))
-    this->tree.construct_tree();
+    this->force.full_update();
     this->update_forces_for_all_particles();
 
     // v(t+dt) = v(t) + 0.5(a(t) + a(t+dt))
@@ -137,8 +137,8 @@ template class VelocityVerletIntegrator<3>;
 
 template<std::size_t NDIM>
 AdaptiveTimestepEulerIntegrator<NDIM>::AdaptiveTimestepEulerIntegrator(
-    State<NDIM> &s, double dt
-): EulerIntegrator<NDIM>(s, dt)
+    State<NDIM> &s, Force<NDIM> &f, double dt
+): EulerIntegrator<NDIM>(s, f, dt)
 {
     std::cout << "Initialising AdaptiveTimestepEulerIntegrator" << std::endl;
 }
@@ -179,8 +179,8 @@ template class AdaptiveTimestepEulerIntegrator<3>;
 
 template<std::size_t NDIM>
 AdaptiveTimestepVelocityVerletIntegrator<NDIM>::AdaptiveTimestepVelocityVerletIntegrator(
-    State<NDIM> &s, double dt
-): VelocityVerletIntegrator<NDIM>(s, dt)
+    State<NDIM> &s, Force<NDIM> &f, double dt
+): VelocityVerletIntegrator<NDIM>(s, f, dt)
 {
     std::cout << "Initialising AdaptiveTimestepVelocityVerletIntegrator" << std::endl;
 }

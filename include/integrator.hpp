@@ -2,7 +2,8 @@
 #define INTEGRATOR_H
 
 #include <state.hpp>
-#include <kdtree.hpp>
+#include "kdtree.hpp"
+#include "forces.hpp"
 
 // Parameter to control the minimum timestep. Smaller = shorter timestep
 const double TIMESTEP_ETA = 0.05;
@@ -15,10 +16,10 @@ class Integrator{
     protected:
         double dt;
         State<NDIM> &state;
-        KDTree<NDIM> tree;
+        Force<NDIM> &force;
 
     public:
-        Integrator(State<NDIM> &s, double timestep);
+        Integrator(State<NDIM> &s, Force<NDIM> &force, double timestep);
         virtual void step();
 
     protected:
@@ -32,7 +33,7 @@ class Integrator{
 template<std::size_t NDIM>
 class EulerIntegrator: public Integrator<NDIM>{
     public:
-        EulerIntegrator(State<NDIM> &s, double dt);
+        EulerIntegrator(State<NDIM> &s, Force<NDIM> &force, double dt);
     protected:
         void _step(double dt) override;
 };
@@ -41,7 +42,7 @@ class EulerIntegrator: public Integrator<NDIM>{
 template<std::size_t NDIM>
 class AdaptiveTimestepEulerIntegrator: public EulerIntegrator<NDIM>{
     public:
-        AdaptiveTimestepEulerIntegrator(State<NDIM> &s, double dt);
+        AdaptiveTimestepEulerIntegrator(State<NDIM> &s, Force<NDIM> &force, double dt);
         void step() override;
 };
 
@@ -51,7 +52,7 @@ class VelocityVerletIntegrator: public Integrator<NDIM>{
     private:
         std::vector<Particle<NDIM>> old_particles;
     public:
-        VelocityVerletIntegrator(State<NDIM> &s, double dt);
+        VelocityVerletIntegrator(State<NDIM> &s, Force<NDIM> &force, double dt);
     protected:
         void _step(double dt) override;
 };
@@ -60,7 +61,7 @@ class VelocityVerletIntegrator: public Integrator<NDIM>{
 template<std::size_t NDIM>
 class AdaptiveTimestepVelocityVerletIntegrator: public VelocityVerletIntegrator<NDIM>{
     public:
-        AdaptiveTimestepVelocityVerletIntegrator(State<NDIM> &s, double dt);
+        AdaptiveTimestepVelocityVerletIntegrator(State<NDIM> &s, Force<NDIM> &force, double dt);
         void step() override;
 };
 
