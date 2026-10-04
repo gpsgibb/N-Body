@@ -1,3 +1,6 @@
+#ifndef FORCES_H
+#define FORCES_H
+
 #include "particle.hpp"
 #include "kdtree.hpp"
 #include <cmath>
@@ -10,7 +13,7 @@ class Force{
         virtual std::array<double, NDIM> get_force(std::size_t i);
         virtual void full_update(){};
         virtual void partial_update(){};
-        virtual double get_interaction_lengthscale(std::size_t i) {return INFINITY;}
+        virtual double get_interaction_lengthscale(std::size_t) {return INFINITY;}
 };
 
 
@@ -26,3 +29,5 @@ class KDTreeGravForce: public Force<NDIM>{
         void partial_update() override;
         double get_interaction_lengthscale(std::size_t i) override;
 };
+
+#endif
