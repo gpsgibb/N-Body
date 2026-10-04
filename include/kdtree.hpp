@@ -41,7 +41,7 @@ class KDTree{
         void reorder_particles();
 
     private:
-        int create_node(std::size_t &index, std::size_t start, std::size_t stop, int dim, std::array<tuple, NDIM> bounds);
+        int create_node(std::size_t &index, std::size_t start, std::size_t stop, std::array<tuple, NDIM> bounds);
         std::array<double, NDIM> calc_force_from_node(std::size_t node_idx, std::size_t par_idx);
         double nearest_neighbour_from_node(std::size_t node_idx, std::size_t par_idx, double mindist);
 };

@@ -113,7 +113,7 @@ void KDTree<NDIM>::construct_tree(){
     std::array<tuple, NDIM> bounds = minmax(particles);
 
     // Create root node (which recursively creates all other nodes)
-    create_node(node_idx, 0, indices.size(), 0, bounds);
+    create_node(node_idx, 0, indices.size(), bounds);
 
     // Each node's centre of mass currently contains sum(pos*m), so divide sum(pos*m) by sum(m) to
     // get the centre of mass
@@ -128,7 +128,7 @@ void KDTree<NDIM>::construct_tree(){
 
 // Create the node of a tree (recursively creating all child nodes if required)
 template<std::size_t NDIM>
-int KDTree<NDIM>::create_node(std::size_t &idx, std::size_t start, std::size_t stop, int dim, std::array<tuple, NDIM> bounds){
+int KDTree<NDIM>::create_node(std::size_t &idx, std::size_t start, std::size_t stop, std::array<tuple, NDIM> bounds){
 
     std::size_t n = stop - start;
 
@@ -138,6 +138,18 @@ int KDTree<NDIM>::create_node(std::size_t &idx, std::size_t start, std::size_t s
     }
 
     TreeNode<NDIM> &node = nodes.at(idx);
+
+    // determine dimension to split (the one with the largest bounding box)
+    int dim = 0;
+    double boxl = bounds[0][1] - bounds[0][0];
+    double l;
+    for (std::size_t k=1;k<NDIM;k++){
+        l = bounds[k][1] - bounds[k][0];
+        if (boxl < l){
+            boxl = l;
+            dim = k;
+        }
+    }
 
     // Sort the indices in the dimension of this node
     argsort(particles, indices, dim, start, stop);
@@ -162,17 +174,16 @@ int KDTree<NDIM>::create_node(std::size_t &idx, std::size_t start, std::size_t s
 
     // increment the index of the "next" node and create the child nodes
     idx += 1;
-    int newdim = (dim+1) % NDIM;
 
     std::array<tuple, NDIM> lowerbounds=bounds, upperbounds=bounds;
     lowerbounds = bounds;
     lowerbounds[dim][1] = particles[indices[lstop]].pos[dim];
-    node.lower = create_node(idx, start, lstop, newdim, lowerbounds);
+    node.lower = create_node(idx, start, lstop, lowerbounds);
     
     upperbounds = bounds;
     upperbounds[dim][0] = particles[indices[ustart]].pos[dim];
     upperbounds[dim][0] = particles[indices[lstop]].pos[dim];
-    node.upper = create_node(idx, ustart, stop, newdim, upperbounds);
+    node.upper = create_node(idx, ustart, stop, upperbounds);
 
     // Add the masses and centre of masses * mass of the child nodes
     if (node.lower > 0){
