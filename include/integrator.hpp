@@ -8,8 +8,11 @@
 // Parameter to control the minimum timestep. Smaller = shorter timestep
 const double TIMESTEP_ETA = 0.05;
 
+// Minimum timestep for an integrator =  dt/2**MAXDEPTH
+const int MAXDEPTH = 10;
+
 // ratio of Integrator's timestep and the minimum allowed timestep
-const int SMALLEST_TIMESTEP_RATIO = 1024;
+const int SMALLEST_TIMESTEP_RATIO = pow(2, MAXDEPTH);
 
 template<std::size_t NDIM>
 class Integrator{
@@ -66,5 +69,19 @@ class AdaptiveTimestepVelocityVerletIntegrator: public VelocityVerletIntegrator<
 };
 
 
+template<std::size_t NDIM>
+class BlockTimestepIntegrator: public Integrator<NDIM>{
+    private:
+        std::vector<Particle<NDIM>> old_pars;
+        std::vector<double> lastt;
+        std::vector<int> depths;
+
+    public:
+        BlockTimestepIntegrator(State<NDIM> &s, Force<NDIM> &force, double dt);
+
+    private:
+        void _step(double dt) override;
+        double assign_timestep_to_particle(std::size_t i);
+};
 
 #endif

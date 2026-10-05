@@ -28,11 +28,12 @@ int main(int argc, char** argv){
 
     KDTree<NDIM> tree(state.particles);
     KDTreeGravForce<NDIM> force(state.particles, tree);
-    AdaptiveTimestepVelocityVerletIntegrator<NDIM> integrator(state, force, dt);
-    Iterator<NDIM> iterator(state, integrator, 10000);
+    BlockTimestepIntegrator<NDIM> integrator(state, force, dt);
+    Iterator<NDIM> iterator(state, integrator, 2500);
 
     iterator.start();
 
+    std::cout << "Writing state to file" << std::endl;
     state.save_state("state.dat");
 
     return 0;
