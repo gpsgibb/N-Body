@@ -93,6 +93,18 @@ bool contained_by_bounding_box(std::array<tuple, NDIM> box, std::array<double, N
 }
 
 
+// "add" two bounding boxes together to create one that fills both boxes
+template<std::size_t NDIM>
+std::array<tuple, NDIM> add_bounding_box(std::array<tuple, NDIM> b1, std::array<tuple, NDIM> b2){
+    std::array<tuple, NDIM> bout = b1;
+    for (std::size_t k=0;k<NDIM;k++){
+        if (b2[k][0] < b1[k][0]) bout[k][0] = b2[k][0];
+        if (b2[k][1] > b1[k][1]) bout[k][1] = b2[k][1];
+    }
+    return bout;
+}
+
+
 // KDTree initialiser
 template<std::size_t NDIM>
 KDTree<NDIM>::KDTree(std::vector<Particle<NDIM>> &pars): particles(pars) {
@@ -134,14 +146,6 @@ void KDTree<NDIM>::construct_tree(){
 
     // Create root node (which recursively creates all other nodes)
     create_node(node_idx, 0, indices.size(), bounds);
-
-    // Each node's centre of mass currently contains sum(pos*m), so divide sum(pos*m) by sum(m) to
-    // get the centre of mass
-    for (TreeNode<NDIM> &node: nodes){
-        for (std::size_t i=0; i<NDIM;i++){
-            node.centre_of_mass[i] /= node.mass;
-        }
-    }
 
 }
 
@@ -207,10 +211,8 @@ int KDTree<NDIM>::create_node(std::size_t &idx, std::size_t start, std::size_t s
         if (particles[ind].pos[dim] > umax) umax = particles[ind].pos[dim];
     }
 
-
     // increment the index of the "next" node and create the child nodes
     idx += 1;
-
 
     std::array<tuple, NDIM> lowerbounds=bounds, upperbounds=bounds;
     lowerbounds = bounds;
@@ -223,23 +225,37 @@ int KDTree<NDIM>::create_node(std::size_t &idx, std::size_t start, std::size_t s
     upperbounds[dim][1] = umax;
     node.upper = create_node(idx, ustart, stop, upperbounds);
 
+    // compute true bounds of this node, starting with the bounds of this node's particle, then adding the bounds from
+    // the child nodes
+    for (std::size_t k=0;k<NDIM;k++){
+        node.bounding_box[k][0] = mypar.pos[k];
+        node.bounding_box[k][1] = mypar.pos[k];
+    }
+
     // Add the masses and centre of masses * mass of the chid nodes
     if (node.lower > 0){
         TreeNode lower = nodes[node.lower];
         node.mass += lower.mass;
         for (std::size_t i=0; i<NDIM;i++){
-            node.centre_of_mass[i] += lower.centre_of_mass[i];
+            node.centre_of_mass[i] += lower.centre_of_mass[i] * lower.mass;
         }
+        node.bounding_box = add_bounding_box(node.bounding_box, lower.bounding_box);
     }
     if (node.upper > 0){
         TreeNode upper = nodes[node.upper];
         node.mass += upper.mass;
         for (std::size_t i=0; i<NDIM;i++){
-            node.centre_of_mass[i] += upper.centre_of_mass[i];
+            node.centre_of_mass[i] += upper.centre_of_mass[i] * upper.mass;
         }
+        node.bounding_box = add_bounding_box(node.bounding_box, upper.bounding_box);
     }
 
-    node.size = bounding_box_size<NDIM>(bounds);
+    // centre of mass currently holds sum(x*mass). Divide by nodes's mass to get centre of mass
+    for (std::size_t i=0; i<NDIM;i++){
+        node.centre_of_mass[i] /= node.mass;
+    }
+
+    node.size = bounding_box_size<NDIM>(node.bounding_box);
 
     return myidx;
 }
