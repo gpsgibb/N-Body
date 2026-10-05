@@ -410,7 +410,7 @@ void KDTree<NDIM>::update_centre_of_mass(){
 }
 
 
-// return centre of mass (* total mass) of node idx
+// recompute the node's centre of mass. Also recompute its bounding box
 template<std::size_t NDIM>
 void KDTree<NDIM>::update_node_centre_of_mass(std::size_t idx){
     TreeNode<NDIM> &node = nodes[idx];
@@ -423,13 +423,20 @@ void KDTree<NDIM>::update_node_centre_of_mass(std::size_t idx){
         mycom[k] = par.pos[k] * par.mass;
     }
 
-    // get centre of masses of children and sum
+    // set bounding box to that of the node's particle
+    for (std::size_t k=0;k<NDIM;k++){
+        node.bounding_box[k][0] = par.pos[k];
+        node.bounding_box[k][1] = par.pos[k];
+    }
+
+    // Add children's centre of mass and bounding boxes
     if (node.lower >= 0){
         update_node_centre_of_mass(node.lower);
         lower = nodes[node.lower];
         for (std::size_t k=0;k<NDIM;k++){
             mycom[k] += lower.centre_of_mass[k] * lower.mass;
         }
+        node.bounding_box = add_bounding_box(node.bounding_box, lower.bounding_box);
     }
 
     if (node.upper >= 0){
@@ -438,6 +445,7 @@ void KDTree<NDIM>::update_node_centre_of_mass(std::size_t idx){
         for (std::size_t k=0;k<NDIM;k++){
             mycom[k] += upper.centre_of_mass[k] * upper.mass;
         }
+        node.bounding_box = add_bounding_box(node.bounding_box, upper.bounding_box);
     }
 
     for (std::size_t k=0;k<NDIM;k++){
