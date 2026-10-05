@@ -45,7 +45,7 @@ class KDTree{
         int create_node(std::size_t &index, std::size_t start, std::size_t stop, std::array<tuple, NDIM> bounds);
         std::array<double, NDIM> calc_force_from_node(std::size_t node_idx, std::size_t par_idx);
         double nearest_neighbour_from_node(std::size_t node_idx, std::size_t par_idx, double mindist);
-        std::array<double, NDIM> update_node_centre_of_mass(std::size_t node_idx);
+        void update_node_centre_of_mass(std::size_t node_idx);
 };
 
 # endif
