@@ -23,6 +23,26 @@ void argsort(
 }
 
 
+// Use nth_element to partition the array such that the median value is at position n/2
+// with all smaller elements to the left of it, and all larger elements to the right.
+template<std::size_t NDIM>
+void median(
+    std::vector<Particle<NDIM>> &particles,
+    std::vector<std::size_t> &indices,
+    int dim,
+    std::size_t start,
+    std::size_t stop
+){
+    std::size_t median_pos = start + (stop-start)/2;
+    std::nth_element(
+        indices.begin()+start, indices.begin() + median_pos, indices.begin()+stop,
+        [dim, &particles](std::size_t i, std::size_t j){
+            return particles[i].pos[dim] < particles[j].pos[dim];
+        }
+    );
+}
+
+
 // get min/max values of particle positions
 template<std::size_t NDIM>
 std::array<tuple, NDIM> minmax(std::vector<Particle<NDIM>> &particles){
@@ -152,7 +172,8 @@ int KDTree<NDIM>::create_node(std::size_t &idx, std::size_t start, std::size_t s
     }
 
     // Sort the indices in the dimension of this node
-    argsort(particles, indices, dim, start, stop);
+    //argsort(particles, indices, dim, start, stop);
+    median(particles, indices, dim, start, stop);
 
     std::size_t myidx = idx;
     std::size_t particle_index = indices[start + n/2];
@@ -172,20 +193,37 @@ int KDTree<NDIM>::create_node(std::size_t &idx, std::size_t start, std::size_t s
     lstop = start + n/2;
     ustart = start + n/2+1;
 
+    // get min/max bounds for the child nodes in the splitting dimension
+    double lmin=INFINITY, lmax=-INFINITY;
+    double umin=INFINITY, umax=-INFINITY;
+    for (std::size_t i=start;i<lstop;i++){
+        int ind = indices[i];
+        if (particles[ind].pos[dim] < lmin) lmin = particles[ind].pos[dim];
+        if (particles[ind].pos[dim] > lmax) lmax = particles[ind].pos[dim];
+    }
+    for (std::size_t i=ustart;i<stop;i++){
+        int ind = indices[i];
+        if (particles[ind].pos[dim] < umin) umin = particles[ind].pos[dim];
+        if (particles[ind].pos[dim] > umax) umax = particles[ind].pos[dim];
+    }
+
+
     // increment the index of the "next" node and create the child nodes
     idx += 1;
 
+
     std::array<tuple, NDIM> lowerbounds=bounds, upperbounds=bounds;
     lowerbounds = bounds;
-    lowerbounds[dim][1] = particles[indices[lstop]].pos[dim];
+    lowerbounds[dim][0] = lmin;
+    lowerbounds[dim][1] = lmax;
     node.lower = create_node(idx, start, lstop, lowerbounds);
     
     upperbounds = bounds;
-    upperbounds[dim][0] = particles[indices[ustart]].pos[dim];
-    upperbounds[dim][0] = particles[indices[lstop]].pos[dim];
+    upperbounds[dim][0] = umin;
+    upperbounds[dim][1] = umax;
     node.upper = create_node(idx, ustart, stop, upperbounds);
 
-    // Add the masses and centre of masses * mass of the child nodes
+    // Add the masses and centre of masses * mass of the chid nodes
     if (node.lower > 0){
         TreeNode lower = nodes[node.lower];
         node.mass += lower.mass;
