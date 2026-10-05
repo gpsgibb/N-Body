@@ -39,13 +39,13 @@ class KDTree{
         void save_tree(std::string filename);
         double nearest_neighbour(std::size_t i);
         void reorder_particles();
-        void update_centre_of_mass();
+        void update();
 
     private:
         int create_node(std::size_t &index, std::size_t start, std::size_t stop, std::array<tuple, NDIM> bounds);
         std::array<double, NDIM> calc_force_from_node(std::size_t node_idx, std::size_t par_idx);
         double nearest_neighbour_from_node(std::size_t node_idx, std::size_t par_idx, double mindist);
-        void update_node_centre_of_mass(std::size_t node_idx);
+        void update_node(std::size_t node_idx);
 };
 
 # endif

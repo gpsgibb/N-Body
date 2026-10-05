@@ -404,15 +404,16 @@ void KDTree<NDIM>::reorder_particles(){
 }
 
 
+// Update the tree's nodes' centres of mass and bounding boxes
 template<std::size_t NDIM>
-void KDTree<NDIM>::update_centre_of_mass(){
-    update_node_centre_of_mass(0);
+void KDTree<NDIM>::update(){
+    update_node(0);
 }
 
 
-// recompute the node's centre of mass. Also recompute its bounding box
+// Recompute the node's centre of mass and bounding box
 template<std::size_t NDIM>
-void KDTree<NDIM>::update_node_centre_of_mass(std::size_t idx){
+void KDTree<NDIM>::update_node(std::size_t idx){
     TreeNode<NDIM> &node = nodes[idx];
     TreeNode<NDIM> lower, upper;
 
@@ -431,7 +432,7 @@ void KDTree<NDIM>::update_node_centre_of_mass(std::size_t idx){
 
     // Add children's centre of mass and bounding boxes
     if (node.lower >= 0){
-        update_node_centre_of_mass(node.lower);
+        update_node(node.lower);
         lower = nodes[node.lower];
         for (std::size_t k=0;k<NDIM;k++){
             mycom[k] += lower.centre_of_mass[k] * lower.mass;
@@ -440,7 +441,7 @@ void KDTree<NDIM>::update_node_centre_of_mass(std::size_t idx){
     }
 
     if (node.upper >= 0){
-        update_node_centre_of_mass(node.upper);
+        update_node(node.upper);
         upper = nodes[node.upper];
         for (std::size_t k=0;k<NDIM;k++){
             mycom[k] += upper.centre_of_mass[k] * upper.mass;

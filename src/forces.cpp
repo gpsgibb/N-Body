@@ -13,7 +13,7 @@ std::array<double, NDIM> KDTreeGravForce<NDIM>::get_force(std::size_t i){
 
 template<std::size_t NDIM>
 void KDTreeGravForce<NDIM>::partial_update(){
-    tree.update_centre_of_mass();
+    tree.update();
 }
 
 
