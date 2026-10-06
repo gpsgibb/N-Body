@@ -145,7 +145,11 @@ void KDTree<NDIM>::construct_tree(){
     std::array<tuple, NDIM> bounds = minmax(particles);
 
     // Create root node (which recursively creates all other nodes)
-    create_node(node_idx, 0, indices.size(), bounds);
+    #pragma omp parallel
+    {
+    #pragma omp single
+    create_node(node_idx, 0, indices.size(), bounds, 0);
+    }
 
     // Reorder particles so they appear in the same order in memory as in the tree. This speeds up force
     // evaluations via better use of cache
@@ -156,7 +160,7 @@ void KDTree<NDIM>::construct_tree(){
 
 // Create the node of a tree (recursively creating all child nodes if required)
 template<std::size_t NDIM>
-int KDTree<NDIM>::create_node(std::size_t &idx, std::size_t start, std::size_t stop, std::array<tuple, NDIM> bounds){
+long KDTree<NDIM>::create_node(std::size_t idx, std::size_t start, std::size_t stop, std::array<tuple, NDIM> bounds, int depth){
 
     std::size_t n = stop - start;
 
@@ -215,19 +219,20 @@ int KDTree<NDIM>::create_node(std::size_t &idx, std::size_t start, std::size_t s
         if (particles[ind].pos[dim] > umax) umax = particles[ind].pos[dim];
     }
 
-    // increment the index of the "next" node and create the child nodes
-    idx += 1;
-
     std::array<tuple, NDIM> lowerbounds=bounds, upperbounds=bounds;
     lowerbounds = bounds;
     lowerbounds[dim][0] = lmin;
     lowerbounds[dim][1] = lmax;
-    node.lower = create_node(idx, start, lstop, lowerbounds);
+    #pragma omp task if(depth < 5 && n > 1024) shared(node)
+    node.lower = create_node(idx + 1, start, lstop, lowerbounds, depth+1);
     
     upperbounds = bounds;
     upperbounds[dim][0] = umin;
     upperbounds[dim][1] = umax;
-    node.upper = create_node(idx, ustart, stop, upperbounds);
+    #pragma omp task if(depth < 5 && n > 1024) shared(node)
+    node.upper = create_node(idx + n/2 + 1, ustart, stop, upperbounds, depth+1);
+
+    #pragma omp taskwait
 
     // compute true bounds of this node, starting with the bounds of this node's particle, then adding the bounds from
     // the child nodes
@@ -261,7 +266,7 @@ int KDTree<NDIM>::create_node(std::size_t &idx, std::size_t start, std::size_t s
 
     node.size = bounding_box_size<NDIM>(node.bounding_box);
 
-    return myidx;
+    return long(myidx);
 }
 
 
