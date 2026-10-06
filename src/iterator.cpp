@@ -13,7 +13,7 @@ void Iterator<NDIM>::start(){
     double t0, t1;
     t0 = omp_get_wtime();
     while (state.it < maxits){
-        std::cout << "Step " << state.it << " of " << maxits << std::endl;
+        std::cout << "Iteration " << state.it << " of " << maxits << std::endl;
         integrator.step();
         state.it += 1;
     }
