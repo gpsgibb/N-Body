@@ -10,6 +10,8 @@ Integrator<NDIM>::Integrator(State<NDIM> &s, Force<NDIM> &force, double timestep
     // Compute force on all particles
     // This is because all integrators assume the initial state is pos(t), vel(t), acc(t)
     update_forces_for_all_particles();
+
+    compute_energy();
 };
 
 
@@ -18,6 +20,35 @@ Integrator<NDIM>::Integrator(State<NDIM> &s, Force<NDIM> &force, double timestep
 template<std::size_t NDIM>
 void Integrator<NDIM>::step(){
     _step(dt);
+    compute_energy();
+}
+
+
+template<std::size_t NDIM>
+void Integrator<NDIM>::compute_energy(){
+    double pe = 0.0, ke=0.0;
+
+    #pragma omp parallel for reduction(+:pe, ke)
+    for (std::size_t i=0;i<state.particles.size();i++){
+        state.particles[i].potential_energy = force.get_energy(i);
+        pe += state.particles[i].potential_energy;
+        double ke_i = 0;
+        for (std::size_t k=0;k<NDIM;k++){
+            ke_i += 0.5 * state.particles[i].mass * pow(state.particles[i].vel[k], 2);
+        }
+        state.particles[i].kinetic_energy = ke_i;
+        ke += state.particles[i].kinetic_energy;
+    }
+
+    // The sum of potential energy double counts the potential energy as each particle's contrubution in the sum
+    // comes twice, so we need to divide by 2
+    pe /= 2;
+
+    std::cout << "Time = " << state.t << std::endl;
+    std::cout << "Potential energy " << pe << std::endl;
+    std::cout << "Kinetic energy " << ke << std::endl;
+    std::cout << "Total energy " << ke + pe << std::endl; 
+    std::cout << "2T + V " << 2*ke + pe << std::endl; 
 }
 
 
@@ -166,6 +197,8 @@ void AdaptiveTimestepEulerIntegrator<NDIM>::step(){
 
         n_steps += 1;
 
+        this -> compute_energy();
+
     }
     std::cout << "Number of sub-timesteps = " << n_steps << std::endl;
 }
@@ -207,6 +240,8 @@ void AdaptiveTimestepVelocityVerletIntegrator<NDIM>::step(){
         this->_step(dt_local);
 
         n_steps += 1;
+
+        this -> compute_energy();
 
     }
     std::cout << "Number of sub-timesteps = " << n_steps << std::endl;

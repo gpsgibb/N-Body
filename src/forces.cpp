@@ -28,6 +28,10 @@ double KDTreeGravForce<NDIM>::get_interaction_lengthscale(std::size_t i){
     return tree.nearest_neighbour(i);
 }
 
+template<std::size_t NDIM>
+double KDTreeGravForce<NDIM>::get_energy(std::size_t i){
+    return tree.potential_energy(i);
+}
 
 template class KDTreeGravForce<2>;
 template class KDTreeGravForce<3>;

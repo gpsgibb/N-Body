@@ -9,6 +9,8 @@ struct Particle{
     std::array<double, NDIM> pos;
     std::array<double, NDIM> vel;
     std::array<double, NDIM> acc;
+    double potential_energy;
+    double kinetic_energy;
 };
 
 #endif
