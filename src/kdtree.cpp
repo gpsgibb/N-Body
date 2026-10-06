@@ -147,6 +147,10 @@ void KDTree<NDIM>::construct_tree(){
     // Create root node (which recursively creates all other nodes)
     create_node(node_idx, 0, indices.size(), bounds);
 
+    // Reorder particles so they appear in the same order in memory as in the tree. This speeds up force
+    // evaluations via better use of cache
+    reorder_particles();
+
 }
 
 
@@ -404,14 +408,14 @@ void KDTree<NDIM>::reorder_particles(){
 }
 
 
-// Update the tree's nodes' centres of mass and bounding boxes
+// Update the tree's nodes' centres of mass, bounding boxes and sizes
 template<std::size_t NDIM>
 void KDTree<NDIM>::update(){
     update_node(0);
 }
 
 
-// Recompute the node's centre of mass and bounding box
+// Recompute the node's centre of mass, bounding box and size
 template<std::size_t NDIM>
 void KDTree<NDIM>::update_node(std::size_t idx){
     TreeNode<NDIM> &node = nodes[idx];
@@ -449,9 +453,11 @@ void KDTree<NDIM>::update_node(std::size_t idx){
         node.bounding_box = add_bounding_box(node.bounding_box, upper.bounding_box);
     }
 
+    // update centre of mass and the node's size
     for (std::size_t k=0;k<NDIM;k++){
         node.centre_of_mass[k] = mycom[k] / node.mass;
     }
+    node.size = bounding_box_size<NDIM>(node.bounding_box);
 }
 
 
