@@ -249,6 +249,12 @@ double BlockTimestepIntegrator<NDIM>::assign_timestep_to_particle(std::size_t i)
 template<std::size_t NDIM>
 void BlockTimestepIntegrator<NDIM>::_step(double dt){
     int maxdepth=0;
+    // copy of the particles. This is needed as we need to store the old positions/velocities/forces of the particles
+    old_pars = this->state.particles;
+
+    // the last time each particle was updated
+    lastt = std::vector<double>(old_pars.size(), this->state.t);
+
     std::size_t n = old_pars.size();
 
     // assign timesteps for all particles
