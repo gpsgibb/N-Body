@@ -464,6 +464,58 @@ void KDTree<NDIM>::update_node(std::size_t idx){
 }
 
 
+// gets the potential energy of particle i
+template<std::size_t NDIM>
+double KDTree<NDIM>::potential_energy(std::size_t i){
+    return potential_energy_from_node(0, i);
+}
+
+
+// gets the potential energy for particle par_idx from node node_idx
+template<std::size_t NDIM>
+double KDTree<NDIM>::potential_energy_from_node(std::size_t node_idx, std::size_t par_idx){
+    double pe=0.0;
+    std::array<double, NDIM> r;
+    TreeNode node = nodes[node_idx];
+    Particle par = particles[par_idx];
+    double rsq = 0.0;
+    bool mac, self, contained;
+
+    contained = contained_by_bounding_box(node.bounding_box, par.pos);
+
+    for (std::size_t i=0;i<NDIM;i++){
+        r[i] = node.centre_of_mass[i] - par.pos[i];
+        rsq += r[i]*r[i];
+    }
+
+    mac = (pow(node.size, 2) / rsq) > pow(MAC_CONDITION, 2);
+    self = node.idx == par_idx;
+
+    if (self || mac || contained){
+        // go down tree
+        if (node.lower >= 0) pe += potential_energy_from_node(node.lower, par_idx);
+        if (node.upper >= 0) pe += potential_energy_from_node(node.upper, par_idx);
+
+        // child nodes do not contain the particle represented by this node, so need to explicitly
+        // include PE contribution from it
+        if (!self){
+            rsq = 0;
+            for (std::size_t i=0;i<NDIM;i++){
+                r[i] = particles[node.idx].pos[i] - par.pos[i];
+                rsq += r[i]*r[i];
+            }
+            pe += -(par.mass * particles[node.idx].mass) / sqrt(rsq + pow(SMOOTHING_SIZE, 2));
+        }
+    } else {
+        // evaluate PE from this node and exit
+        // PE = -M1M2 / sqrt(r**2 + a**2)
+        pe += -(par.mass * node.mass) / sqrt(rsq + pow(SMOOTHING_SIZE, 2));
+    }
+
+    return pe;
+}
+
+
 // write the tree to file
 template<std::size_t NDIM>
 void KDTree<NDIM>::save_tree(std::string filename){
