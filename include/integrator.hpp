@@ -6,7 +6,7 @@
 #include "forces.hpp"
 
 // Parameter to control the minimum timestep. Smaller = shorter timestep
-const double TIMESTEP_ETA = 0.05;
+const double TIMESTEP_ETA = 0.02;
 
 // Minimum timestep for an integrator =  dt/2**MAXDEPTH
 const int MAXDEPTH = 10;
@@ -24,6 +24,7 @@ class Integrator{
     public:
         Integrator(State<NDIM> &s, Force<NDIM> &force, double timestep);
         virtual void step();
+        void compute_energy();
 
     protected:
         virtual void _step(double dt) = 0;
