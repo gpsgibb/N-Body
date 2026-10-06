@@ -14,6 +14,7 @@ class Force{
         virtual void full_update(){};
         virtual void partial_update(){};
         virtual double get_interaction_lengthscale(std::size_t) {return INFINITY;}
+        virtual double get_energy(std::size_t) = 0;
 };
 
 
@@ -28,6 +29,7 @@ class KDTreeGravForce: public Force<NDIM>{
         void full_update() override;
         void partial_update() override;
         double get_interaction_lengthscale(std::size_t i) override;
+        double get_energy(std::size_t i) override;
 };
 
 #endif
