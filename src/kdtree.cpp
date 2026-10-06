@@ -283,18 +283,17 @@ std::array<double, NDIM> KDTree<NDIM>::calc_force_from_node(std::size_t node_idx
     std::array<double, NDIM> force = {}, r;
     TreeNode node = nodes[node_idx];
     Particle par = particles[par_idx];
-    double dist=0;
+    double rsq = 0.0;
     bool mac, self, contained;
 
     contained = contained_by_bounding_box(node.bounding_box, par.pos);
 
     for (std::size_t i=0;i<NDIM;i++){
         r[i] = node.centre_of_mass[i] - par.pos[i];
-        dist += r[i]*r[i];
+        rsq += r[i]*r[i];
     }
-    dist = sqrt(dist);
 
-    mac = (node.size / dist) > MAC_CONDITION;
+    mac = (pow(node.size, 2) / rsq) > pow(MAC_CONDITION, 2);
     self = node.idx == par_idx;
 
     if (self || mac || contained){
@@ -310,23 +309,22 @@ std::array<double, NDIM> KDTree<NDIM>::calc_force_from_node(std::size_t node_idx
         // child nodes do not contain the particle represented by this node, so need to explicitly
         // include it in the force calculation
         if (!self){
-            dist = 0;
+            rsq = 0;
             for (std::size_t i=0;i<NDIM;i++){
                 r[i] = particles[node.idx].pos[i] - par.pos[i];
-                dist += r[i]*r[i];
+                rsq += r[i]*r[i];
             }
-            dist = sqrt(dist);
-            double distcubed = pow(dist + SMOOTHING_SIZE, 3);
+            double rcubed = pow(rsq + pow(SMOOTHING_SIZE, 2), 1.5);
             for (std::size_t i=0;i<NDIM;i++){
-                force[i] += particles[node.idx].mass* r[i] / distcubed;
+                force[i] += particles[node.idx].mass* r[i] / rcubed;
             }
         }
     } else {
         // evaluate force from this node and exit
         // f = M r / (|r|+a)**3
-        double distcubed = pow(dist + SMOOTHING_SIZE, 3);
+        double rcubed = pow(rsq + pow(SMOOTHING_SIZE,2), 1.5);
         for (std::size_t i=0;i<NDIM;i++){
-            force[i] = node.mass * r[i] / distcubed;
+            force[i] = node.mass * r[i] / rcubed;
         }
     }
 
