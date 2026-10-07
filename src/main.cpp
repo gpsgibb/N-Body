@@ -1,12 +1,11 @@
 #include <iostream>
-#include <omp.h>
+#include <cstdlib>
 #include "state.hpp"
 #include "kdtree.hpp"
-#include <cstdlib>
-#include <vector>
-#include <integrator.hpp>
-#include <iterator.hpp>
+#include "integrator.hpp"
+#include "iterator.hpp"
 #include "forces.hpp"
+#include "io.hpp"
 
 int main(int argc, char** argv){
 
@@ -15,7 +14,7 @@ int main(int argc, char** argv){
     srand(0);
 
     const std::size_t NDIM = 3;
-    double dt = 0.001 * 0.03;
+    double dt = 0.001;
 
     State<NDIM> state(n);
     for (std::size_t i=0;i<state.particles.size();i++){
@@ -25,16 +24,13 @@ int main(int argc, char** argv){
         state.particles[i].mass = 1.0;
     }
 
-
     KDTree<NDIM> tree(state.particles);
+
     KDTreeGravForce<NDIM> force(state.particles, tree);
     BlockTimestepIntegrator<NDIM> integrator(state, force, dt);
-    Iterator<NDIM> iterator(state, integrator, 2500);
+    Iterator<NDIM> iterator(state, integrator, 1000);
 
     iterator.start();
-
-    std::cout << "Writing state to file" << std::endl;
-    state.save_state("state.dat");
 
     return 0;
 
