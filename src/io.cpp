@@ -1,5 +1,4 @@
 #include "io.hpp"
-#include <format>
 
 template<std::size_t NDIM>
 Writer<NDIM>::Writer(State<NDIM> &s): state(s) {
@@ -11,7 +10,9 @@ Writer<NDIM>::Writer(State<NDIM> &s): state(s) {
 
 
 template<std::size_t NDIM>
-void Writer<NDIM>::write(std::string filename) {
+void Writer<NDIM>::write() {
+
+    std::string filename = get_filename();
 
     H5::H5File file(filename, H5F_ACC_TRUNC);
 
@@ -89,6 +90,16 @@ void Writer<NDIM>::create_attribute(std::string key, hsize_t value,  H5::H5File 
     H5::Attribute attribute = file.createAttribute(key, H5::PredType::NATIVE_HSIZE, scalar);
     attribute.write(H5::PredType::NATIVE_HSIZE, &value);
 }
+
+
+template<std::size_t NDIM>
+std::string Writer<NDIM>::get_filename(std::string root, int w, std::string ext){
+    int i = state.it;
+    std::ostringstream oss;
+    oss << root + "_" << std::setw(w) << std::setfill('0') << i << ext;
+    return oss.str();
+}
+
 
 template class Writer<3>;
 template class Writer<2>;

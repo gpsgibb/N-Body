@@ -17,7 +17,7 @@ class State{
     public: 
         State(int n){
             t = 0.0;
-            it = 0.0;
+            it = 0;
             particles.resize(n);
         }
 
