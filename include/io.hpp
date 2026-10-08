@@ -2,6 +2,7 @@
 #define IO_H
 
 #include <H5Cpp.h>
+#include <iostream>
 #include <string>
 #include <sstream>
 #include <iomanip>
@@ -23,6 +24,19 @@ class Writer{
         void create_attribute(std::string key, double value,  H5::H5File file);
         void create_attribute(std::string key, hsize_t value,  H5::H5File file);
         std::string get_filename(std::string root="state", int w=5, std::string ext=".h5");
+};
+
+
+template<std::size_t NDIM>
+class Reader{
+    public:
+        State<NDIM> read(std::string filename);
+    private:
+        void read_attribute(std::string key, int &value, H5::H5File file);
+        void read_attribute(std::string key, std::size_t &value, H5::H5File file);
+        void read_attribute(std::string key, double &value, H5::H5File file);
+        void read_dataset(std::string name, std::vector<double> &buf, H5::H5File file);
+        void read_dataset(std::string name, std::vector<std::array<double, NDIM>> &buf, H5::H5File file);
 };
 
 #endif
