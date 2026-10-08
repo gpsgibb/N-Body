@@ -41,6 +41,12 @@ void Writer<NDIM>::write() {
 
     // dataset for potential energy
     for (std::size_t i=0;i<n;i++){
+        scalar.push_back(state.particles[i].mass);
+    }
+    create_scalar_dataset("mass", file);
+
+    // dataset for potential energy
+    for (std::size_t i=0;i<n;i++){
         scalar.push_back(state.particles[i].potential_energy);
     }
     create_scalar_dataset("potential_energy", file);
@@ -148,6 +154,12 @@ State<NDIM> Reader<NDIM>::read(std::string filename){
     read_dataset("acc", vecbuff, file);
     for (std::size_t i=0;i<n;i++){
         state.particles[i].acc = vecbuff[i];
+    }
+
+    // read mass
+    read_dataset("mass", scalarbuff, file);
+    for (std::size_t i=0;i<n;i++){
+        state.particles[i].mass = scalarbuff[i];
     }
 
     // read pe
