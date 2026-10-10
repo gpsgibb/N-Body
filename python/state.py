@@ -23,21 +23,35 @@ class State:
             time = h.attrs["time"]
             iteration = h.attrs["iteration"]
             ndim = h.attrs["NDIM"]
-    
+
             pos = h["pos"][:]
             vel = h["vel"][:]
             acc = h["acc"][:]
-            pe =  h["potential_energy"][:]
+            pe = h["potential_energy"][:]
             mass = h["mass"][:]
             ke = h["kinetic_energy"][:]
 
         print(f"Read state from {filename}")
-    
+
         return State(mass, pos, vel, acc, pe, ke, ndim, iteration, time)
+
+    @classmethod
+    def empty(cls, n, ndim=3):
+        time = 0.0
+        iteration = 0
+        ndim = ndim
+        mass = np.ones(n, dtype=np.float64)
+        pe = np.zeros(n, dtype=np.float64)
+        ke = np.zeros(n, dtype=np.float64)
+        pos = np.zeros((n, ndim), dtype=np.float64)
+        vel = np.zeros((n, ndim), dtype=np.float64)
+        acc = np.zeros((n, ndim), dtype=np.float64)
+
+        return cls(mass, pos, vel, acc, pe, ke, ndim, iteration, time)
 
     def write(self, filename):
         with h5py.File(filename, "w") as h:
-            h.attrs["time"]=  np.float64(self.time)
+            h.attrs["time"] = np.float64(self.time)
             h.attrs["n"] = np.uint64(len(self.mass))
             h.attrs["iteration"] = np.uint64(self.iteration)
             h.attrs["NDIM"] = np.uint64(self.pos.shape[1])
