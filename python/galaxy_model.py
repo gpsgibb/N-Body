@@ -6,7 +6,6 @@ from state import State
 from profiles import Profile
 
 
-
 class _ThetaProfile(Profile):
     """For sampling the polar angle correctly in 3D"""
 
@@ -60,7 +59,7 @@ class Isotropic2D(GalaxyComponent):
         u = -np.sin(theta)
         v = np.cos(theta)
 
-        flip = np.random.choice([-1,1], self.n_objs)
+        flip = np.random.choice([-1, 1], self.n_objs)
 
         u *= flip
         v *= flip
@@ -70,8 +69,6 @@ class Isotropic2D(GalaxyComponent):
         vel += self.velocity_dispersion * dispersion
 
         return vel
-
-
 
 
 class Isotropic3D(GalaxyComponent):
@@ -92,27 +89,25 @@ class Isotropic3D(GalaxyComponent):
 
         return np.asarray([x, y, z]).T
 
-
     def star_velocities(self, positions):
         # Cross r with x unit vector to get a vector orthogonal to r and x
         # (so a vector on the tangent plane of the sphere)
         xhat = np.zeros((self.n_objs, 3))
-        xhat[:,0] = 1
+        xhat[:, 0] = 1
         v1 = np.cross(positions, xhat)
         v2 = np.cross(positions, v1)
 
         # Normalise
-        v1 = v1/np.linalg.norm(v1, axis=-1, keepdims=True)
-        v2 = v2/np.linalg.norm(v2, axis=-1, keepdims=True)
+        v1 = v1 / np.linalg.norm(v1, axis=-1, keepdims=True)
+        v2 = v2 / np.linalg.norm(v2, axis=-1, keepdims=True)
 
         # Randomise the orientations
-        theta = np.random.uniform(0, 2*np.pi, self.n_objs)
-        vel = v1*np.cos(theta[:, np.newaxis]) + v2*np.sin(theta[:, np.newaxis])
+        theta = np.random.uniform(0, 2 * np.pi, self.n_objs)
+        vel = v1 * np.cos(theta[:, np.newaxis]) + v2 * np.sin(theta[:, np.newaxis])
 
         dispersion = np.random.normal(0, 1, (self.n_objs, self.ndim))
         vel += self.velocity_dispersion * dispersion
         return vel
-
 
 
 class Disk2D(GalaxyComponent):
@@ -218,7 +213,7 @@ class Galaxy:
         sorted_inds = np.argsort(r)
         m_cumulative = np.cumsum(state.mass[sorted_inds])
         # Circular velocity = sqrt(GM(r)/r)
-        vc = np.sqrt(m_cumulative/r[sorted_inds])
+        vc = np.sqrt(m_cumulative / r[sorted_inds])
 
         vels = np.zeros_like(state.mass)
         vels[sorted_inds] = vc
@@ -230,7 +225,6 @@ class Galaxy:
 
         return Galaxy(state)
 
-
     def normalise_masses_for_time(self):
         """Adjust masses so t=1 represents a crossing time"""
         # t_c = sqrt(r^3/M) -> M = r**3/1**2
@@ -239,7 +233,7 @@ class Galaxy:
 
         m_req = r**3
 
-        self.state.mass *= m_req/m
+        self.state.mass *= m_req / m
 
     def write(self, filename, normalise_time=True):
         if normalise_time:

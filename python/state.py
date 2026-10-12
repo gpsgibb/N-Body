@@ -88,5 +88,3 @@ class State:
         state.ke = np.hstack((self.ke, other.ke))
 
         return state
-
-
