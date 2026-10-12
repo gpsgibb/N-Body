@@ -190,22 +190,27 @@ class Galaxy:
         """Combine input components and compute velocities"""
         positions_list = []
         velocities_list = []
+        masses_list = []
 
         # concatenate components
         for component in components_list:
             pos = component.star_positions()
             vel = component.star_velocities(pos)
+            masses = np.ones(component.n_objs) * np.float64(component.mass) / np.float64(component.n_objs)
 
             positions_list.append(pos)
             velocities_list.append(vel)
+            masses_list.append(masses)
 
-        pos = np.hstack(positions_list)
-        vel = np.hstack(velocities_list)
+        pos = np.vstack(positions_list)
+        vel = np.vstack(velocities_list)
+        mass = np.hstack(masses_list)
 
         # create state
         state = State.empty(len(pos))
         state.pos[:, :] = pos[:, :]
         state.vel[:, :] = vel[:, :]
+        state.mass[:] = mass[:]
 
         # Compute velocity magnitudes and apply
         r = np.sqrt((state.pos**2).sum(-1))
@@ -235,6 +240,8 @@ class Galaxy:
 
         self.state.mass *= m_req / m
 
+        print(f"Old mass = {m}, new_mass = {self.state.mass.sum()}")
+
     def write(self, filename, normalise_time=True):
         if normalise_time:
             self.normalise_masses_for_time()
@@ -246,6 +253,34 @@ class Galaxy:
 
         self.state.pos += pos[np.newaxis, :]
         self.state.vel += vel[np.newaxis, :]
+
+    def rotate(self, xz_rot, xy_rot):
+        """Apply a rotation first about the xz plane, then about the xy plane"""
+
+        xz = np.radians(xz_rot)
+        xy = np.radians(xy_rot)
+
+        r1 = np.asarray(
+            [
+                [np.cos(xz), 0, -np.sin(xz)],
+                [0, 1, 0],
+                [np.sin(xz), 0, np.cos(xz)],
+            ]
+        )
+
+        r2 = np.asarray(
+            [
+                [np.cos(xy), -np.sin(xy), 0],
+                [np.sin(xy), np.cos(xy), 0],
+                [0, 0, 1],
+            ]
+        )
+
+        r = r1 @ r2
+
+        self.state.pos = self.state.pos @ r
+        self.state.vel = self.state.vel @ r
+
 
     def __add__(self, other):
         return Galaxy(self.state + other.state)
