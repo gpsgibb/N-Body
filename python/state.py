@@ -64,3 +64,29 @@ class State:
             h.create_dataset("kinetic_energy", data=self.ke)
 
         print(f"Written state to {filename}")
+
+    def __add__(self, other):
+
+        if self.time != other.time:
+            raise ValueError("States are at different times")
+
+        if self.iteration != other.iteration:
+            raise ValueError("States are at different iterations")
+
+        if self.ndim != other.ndim:
+            raise ValueError("States are at different NDIMs")
+
+        n1 = len(self.mass)
+        n2 = len(other.mass)
+        n = n1 + n2
+        state = State.empty(n)
+        state.mass = np.hstack((self.mass, other.mass))
+        state.pos = np.vstack((self.pos, other.pos))
+        state.vel = np.vstack((self.vel, other.vel))
+        state.acc = np.vstack((self.acc, other.acc))
+        state.pe = np.hstack((self.pe, other.pe))
+        state.ke = np.hstack((self.ke, other.ke))
+
+        return state
+
+
