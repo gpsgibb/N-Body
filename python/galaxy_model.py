@@ -1,8 +1,10 @@
 import abc
 import numpy as np
+import matplotlib.pyplot as plt
 
 from state import State
 from profiles import Profile
+
 
 
 class _ThetaProfile(Profile):
@@ -20,11 +22,12 @@ class GalaxyComponent(abc.ABC):
 
     ndim = None
 
-    def __init__(self, n_objs, profile: Profile, mass=None):
+    def __init__(self, n_objs, profile: Profile, mass=None, velocity_dispersion=0.1):
         self.n_objs = n_objs
         self.mass = self.n_objs if mass is None else mass
         self.state = State.empty(n_objs, ndim=self.ndim)
         self.profile = profile
+        self.velocity_dispersion = velocity_dispersion
 
     @abc.abstractmethod
     def star_positions(self):
@@ -62,7 +65,13 @@ class Isotropic2D(GalaxyComponent):
         u *= flip
         v *= flip
 
-        return np.asarray([u, v]).T
+        dispersion = np.random.normal(0, 1, (self.n_objs, self.ndim))
+        vel = np.asarray([u, v]).T
+        vel += self.velocity_dispersion * dispersion
+
+        return vel
+
+
 
 
 class Isotropic3D(GalaxyComponent):
@@ -100,7 +109,10 @@ class Isotropic3D(GalaxyComponent):
         theta = np.random.uniform(0, 2*np.pi, self.n_objs)
         vel = v1*np.cos(theta[:, np.newaxis]) + v2*np.sin(theta[:, np.newaxis])
 
+        dispersion = np.random.normal(0, 1, (self.n_objs, self.ndim))
+        vel += self.velocity_dispersion * dispersion
         return vel
+
 
 
 class Disk2D(GalaxyComponent):
@@ -108,10 +120,11 @@ class Disk2D(GalaxyComponent):
 
     ndim = 2
 
-    def __init__(self, n_objs, disk_profile, mass=None):
+    def __init__(self, n_objs, disk_profile, mass=None, velocity_dispersion=0.1):
         self.n_objs = n_objs
         self.disk_profile = disk_profile
         self.mass = self.n_objs if mass is None else mass
+        self.velocity_dispersion = velocity_dispersion
 
     def star_positions(self):
         r = self.disk_profile.sample(self.n_objs, self.ndim)
@@ -129,7 +142,11 @@ class Disk2D(GalaxyComponent):
         u = -np.sin(theta)
         v = np.cos(theta)
 
-        return np.asarray([u, v]).T
+        dispersion = np.random.normal(0, 1, (self.n_objs, self.ndim))
+        vel = np.asarray([u, v]).T
+        vel += self.velocity_dispersion * dispersion
+
+        return vel
 
 
 class Disk3D(GalaxyComponent):
@@ -137,11 +154,12 @@ class Disk3D(GalaxyComponent):
 
     ndim = 3
 
-    def __init__(self, n_objs, disk_profile, height_profile, mass=None):
+    def __init__(self, n_objs, disk_profile, height_profile, mass=None, velocity_dispersion=0.1):
         self.n_objs = n_objs
         self.disk_profile = disk_profile
         self.height_profile = height_profile
         self.mass = self.n_objs if mass is None else mass
+        self.velocity_dispersion = velocity_dispersion
 
     def star_positions(self):
         r = self.disk_profile.sample(self.n_objs, ndim=2)
@@ -161,4 +179,79 @@ class Disk3D(GalaxyComponent):
         v = np.cos(theta)
         w = np.zeros_like(u)
 
-        return np.asarray([u, v, w]).T
+        dispersion = np.random.normal(0, 1, (self.n_objs, self.ndim))
+        vel = np.asarray([u, v, w]).T
+        vel += self.velocity_dispersion * dispersion
+
+        return vel
+
+
+class Galaxy:
+    def __init__(self, state):
+        self.state = state
+
+    @classmethod
+    def from_components(cls, components_list):
+        """Combine input components and compute velocities"""
+        positions_list = []
+        velocities_list = []
+
+        # concatenate components
+        for component in components_list:
+            pos = component.star_positions()
+            vel = component.star_velocities(pos)
+
+            positions_list.append(pos)
+            velocities_list.append(vel)
+
+        pos = np.hstack(positions_list)
+        vel = np.hstack(velocities_list)
+
+        # create state
+        state = State.empty(len(pos))
+        state.pos[:, :] = pos[:, :]
+        state.vel[:, :] = vel[:, :]
+
+        # Compute velocity magnitudes and apply
+        r = np.sqrt((state.pos**2).sum(-1))
+
+        sorted_inds = np.argsort(r)
+        m_cumulative = np.cumsum(state.mass[sorted_inds])
+        # Circular velocity = sqrt(GM(r)/r)
+        vc = np.sqrt(m_cumulative/r[sorted_inds])
+
+        vels = np.zeros_like(state.mass)
+        vels[sorted_inds] = vc
+
+        plt.scatter(r, vels)
+        plt.show()
+
+        state.vel *= vels[:, np.newaxis]
+
+        return Galaxy(state)
+
+
+    def normalise_masses_for_time(self):
+        """Adjust masses so t=1 represents a crossing time"""
+        # t_c = sqrt(r^3/M) -> M = r**3/1**2
+        m = self.state.mass.sum()
+        r = np.std(self.state.pos, axis=0).sum()
+
+        m_req = r**3
+
+        self.state.mass *= m_req/m
+
+    def write(self, filename, normalise_time=True):
+        if normalise_time:
+            self.normalise_masses_for_time()
+        print("Writing galaxy to file")
+        self.state.write(filename)
+
+    def shift(self, pos, vel):
+        """Shift whole galaxy"""
+
+        self.state.pos += pos[np.newaxis, :]
+        self.state.vel += vel[np.newaxis, :]
+
+    def __add__(self, other):
+        return Galaxy(self.state + other.state)
