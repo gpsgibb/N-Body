@@ -11,7 +11,7 @@ int main(int argc, char** argv){
 
     int n = 1000;
     const std::size_t NDIM = 3;
-    double dt = 0.001;
+    double dt = 0.01;
 
     State<NDIM> state(n);
 

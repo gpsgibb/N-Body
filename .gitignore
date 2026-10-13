@@ -3,6 +3,8 @@
 
 # Data files
 *.h5
+*.png
+*.mp4
 
 # Compiled Object files
 *.slo
