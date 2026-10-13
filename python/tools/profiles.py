@@ -77,7 +77,7 @@ class NFWProfile(Profile):
         self.a = a
 
     def density(self, r):
-        return 1 / (r / self.a) / (1 + r / self.a) ** 2
+        return 1 / ((r+1E-5) / self.a) / (1 + r / self.a) ** 2
 
 
 class HernquistProfile(Profile):
@@ -88,7 +88,7 @@ class HernquistProfile(Profile):
         self.a = a
 
     def density(self, r):
-        return self.a / r / (r + self.a) ** 3
+        return self.a / (r+1E-5) / (r + self.a) ** 3
 
 
 class IsothermalProfile(Profile):
