@@ -4,14 +4,14 @@ Example script to demonstrate creating a galaxy and visualising it
 import numpy as np
 import matplotlib.pyplot as plt
 
-from tools.profiles import ExponentialProfile, ConstantProfile, HernquistProfile
+from tools.profiles import ExponentialProfile, HernquistProfile
 from tools.galaxy_model import Isotropic3D, Disk3D, Galaxy
 from tools.state import State
 from tools.visualise import make_image
 
 # Create individual components of galaxy (here a disk and a bulge)
-disk = Disk3D(10000, ExponentialProfile(1, 0.3), ExponentialProfile(0.2, 0.02), 1)
-bulge = Isotropic3D(1000, HernquistProfile(0.2, 0.1), 0.2)
+disk = Disk3D(10000, ExponentialProfile(1, 0.3), ExponentialProfile(0.2, 0.02), 1, tag=1)
+bulge = Isotropic3D(1000, HernquistProfile(0.2, 0.1), 0.2, tag=2)
 
 # Create galaxy from these components
 gal = Galaxy.from_components([disk, bulge])
