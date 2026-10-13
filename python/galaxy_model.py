@@ -223,10 +223,11 @@ class Galaxy:
         vels = np.zeros_like(state.mass)
         vels[sorted_inds] = vc
 
-        plt.scatter(r, vels)
-        plt.show()
-
         state.vel *= vels[:, np.newaxis]
+
+        # remove mean velocity from system
+        v_mean = np.mean(state.vel, axis=0)
+        state.vel -= v_mean[np.newaxis, :]
 
         return Galaxy(state)
 
