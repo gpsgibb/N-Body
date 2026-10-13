@@ -18,7 +18,8 @@ void Writer<NDIM>::write() {
     create_attribute("iteration", hsize_t(state.it), file);
     create_attribute("n", hsize_t(n), file);
 
-    std::vector<double> buf(n);
+    std::vector<double> doublebuf(n);
+    std::vector<int> intbuf(n);
     std::vector<std::array<double, NDIM>> vec_buf(n);
 
     // dataset for positions
@@ -39,23 +40,29 @@ void Writer<NDIM>::write() {
     }
     create_dataset("acc", vec_buf, file);
 
-    // dataset for potential energy
+    // dataset for mass
     for (std::size_t i=0;i<n;i++){
-        buf[i] = state.particles[i].mass;
+        doublebuf[i] = state.particles[i].mass;
     }
-    create_dataset("mass", buf, file);
+    create_dataset("mass", doublebuf, file);
 
     // dataset for potential energy
     for (std::size_t i=0;i<n;i++){
-        buf[i] = state.particles[i].potential_energy;
+        doublebuf[i] = state.particles[i].potential_energy;
     }
-    create_dataset("potential_energy", buf, file);
+    create_dataset("potential_energy", doublebuf, file);
 
     // dataset for kinetic energy
     for (std::size_t i=0;i<n;i++){
-        buf[i] = state.particles[i].kinetic_energy;
+        doublebuf[i] = state.particles[i].kinetic_energy;
     }
-    create_dataset("kinetic_energy", buf, file);
+    create_dataset("kinetic_energy", doublebuf, file);
+
+    // dataset for tag
+    for (std::size_t i=0;i<n;i++){
+        intbuf[i] = state.particles[i].tag;
+    }
+    create_dataset("tag", intbuf, file);
 
     file.close();
 
@@ -80,6 +87,13 @@ void Writer<NDIM>::create_dataset(std::string dataset_name, std::vector<double> 
     dataset.write(buf.data(), H5::PredType::NATIVE_DOUBLE);
 }
 
+template<std::size_t NDIM>
+void Writer<NDIM>::create_dataset(std::string dataset_name, std::vector<int> &buf, H5::H5File file) {
+    hsize_t dims[1] = {n};
+    H5::DataSpace space(1, dims);
+    H5::DataSet dataset = file.createDataSet(dataset_name, H5::PredType::NATIVE_INT, space);
+    dataset.write(buf.data(), H5::PredType::NATIVE_INT);
+}
 
 template<std::size_t NDIM>
 void Writer<NDIM>::create_attribute(std::string key, double value,  H5::H5File file){
@@ -133,8 +147,9 @@ State<NDIM> Reader<NDIM>::read(std::string filename){
     state.it = it;
     state.t = t;
 
-    std::vector<double> scalarbuff(n);
+    std::vector<double> doublebuff(n);
     std::vector<std::array<double, NDIM>> vecbuff(n);
+    std::vector<int> intbuff(n);
 
     // read positions
     read_dataset("pos", vecbuff, file);
@@ -155,21 +170,27 @@ State<NDIM> Reader<NDIM>::read(std::string filename){
     }
 
     // read mass
-    read_dataset("mass", scalarbuff, file);
+    read_dataset("mass", doublebuff, file);
     for (std::size_t i=0;i<n;i++){
-        state.particles[i].mass = scalarbuff[i];
+        state.particles[i].mass = doublebuff[i];
     }
 
     // read pe
-    read_dataset("potential_energy", scalarbuff, file);
+    read_dataset("potential_energy", doublebuff, file);
     for (std::size_t i=0;i<n;i++){
-        state.particles[i].potential_energy = scalarbuff[i];
+        state.particles[i].potential_energy = doublebuff[i];
     }
 
     // read ke
-    read_dataset("kinetic_energy", scalarbuff, file);
+    read_dataset("kinetic_energy", doublebuff, file);
     for (std::size_t i=0;i<n;i++){
-        state.particles[i].kinetic_energy = scalarbuff[i];
+        state.particles[i].kinetic_energy = doublebuff[i];
+    }
+
+    // read tag
+    read_dataset("tag", intbuff, file);
+    for (std::size_t i=0;i<n;i++){
+        state.particles[i].tag = intbuff[i];
     }
 
     file.close();
@@ -209,6 +230,12 @@ template<std::size_t NDIM>
 void Reader<NDIM>::read_dataset(std::string name, std::vector<double> &buf, H5::H5File file){
     H5::DataSet dataset = file.openDataSet(name);
     dataset.read(buf.data(), H5::PredType::NATIVE_DOUBLE);
+}
+
+template<std::size_t NDIM>
+void Reader<NDIM>::read_dataset(std::string name, std::vector<int> &buf, H5::H5File file){
+    H5::DataSet dataset = file.openDataSet(name);
+    dataset.read(buf.data(), H5::PredType::NATIVE_INT);
 }
 
 

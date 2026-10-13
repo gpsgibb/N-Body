@@ -18,6 +18,7 @@ class Writer{
         void write();
     private:
         void create_dataset(std::string dataset_name, std::vector<double> &buf,  H5::H5File file);
+        void create_dataset(std::string dataset_name, std::vector<int> &buf,  H5::H5File file);
         void create_dataset(std::string dataset_name, std::vector<std::array<double, NDIM>> &buf, H5::H5File file);
         void create_attribute(std::string key, double value,  H5::H5File file);
         void create_attribute(std::string key, hsize_t value,  H5::H5File file);
@@ -34,6 +35,7 @@ class Reader{
         void read_attribute(std::string key, std::size_t &value, H5::H5File file);
         void read_attribute(std::string key, double &value, H5::H5File file);
         void read_dataset(std::string name, std::vector<double> &buf, H5::H5File file);
+        void read_dataset(std::string name, std::vector<int> &buf, H5::H5File file);
         void read_dataset(std::string name, std::vector<std::array<double, NDIM>> &buf, H5::H5File file);
 };
 
