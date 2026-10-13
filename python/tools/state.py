@@ -12,6 +12,7 @@ class State:
     acc: np.ndarray
     pe: np.ndarray
     ke: np.ndarray
+    tag: np.ndarray
     ndim: int
     iteration: int = 0
     time: float = 0.0
@@ -30,10 +31,11 @@ class State:
             pe = h["potential_energy"][:]
             mass = h["mass"][:]
             ke = h["kinetic_energy"][:]
+            tag = h["tag"][:]
 
         print(f"Read state from {filename}")
 
-        return State(mass, pos, vel, acc, pe, ke, ndim, iteration, time)
+        return State(mass, pos, vel, acc, pe, ke, tag, ndim, iteration, time)
 
     @classmethod
     def empty(cls, n, ndim=3):
@@ -46,8 +48,9 @@ class State:
         pos = np.zeros((n, ndim), dtype=np.float64)
         vel = np.zeros((n, ndim), dtype=np.float64)
         acc = np.zeros((n, ndim), dtype=np.float64)
+        tag = np.zeros(n, dtype=np.int32)
 
-        return cls(mass, pos, vel, acc, pe, ke, ndim, iteration, time)
+        return cls(mass, pos, vel, acc, pe, ke, tag, ndim, iteration, time)
 
     def write(self, filename):
         with h5py.File(filename, "w") as h:
@@ -62,6 +65,7 @@ class State:
             h.create_dataset("mass", data=self.mass)
             h.create_dataset("potential_energy", data=self.pe)
             h.create_dataset("kinetic_energy", data=self.ke)
+            h.create_dataset("tag", data=self.tag.astype(np.int32))
 
         print(f"Written state to {filename}")
 
@@ -86,5 +90,6 @@ class State:
         state.acc = np.vstack((self.acc, other.acc))
         state.pe = np.hstack((self.pe, other.pe))
         state.ke = np.hstack((self.ke, other.ke))
+        state.tag = np.hstack(self.tag, other.tag)
 
         return state

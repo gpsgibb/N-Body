@@ -11,6 +11,7 @@ struct Particle{
     std::array<double, NDIM> acc;
     double potential_energy;
     double kinetic_energy;
+    int tag;
 };
 
 #endif
