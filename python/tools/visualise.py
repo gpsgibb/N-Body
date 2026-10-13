@@ -1,8 +1,11 @@
 import numpy as np
 
 
-def make_image(x, y, masses, l0=None, xc=None, yc=None, size=1000, psize=10):
+def make_image(x, y, masses=None, l0=None, xc=None, yc=None, size=1000, psize=10):
     """Make an image of the particles, where each particle is represented by a Gaussian of width psize"""
+
+    if masses is None:
+        masses = np.ones_like(x)
 
     if l0 is None:
         l0 = max(x.max() - x.min(), y.max() - y.min())
