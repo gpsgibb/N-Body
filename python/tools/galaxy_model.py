@@ -3,10 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from .state import State
-from .profiles import Profile
+from .profiles import _Profile
 
 
-class _ThetaProfile(Profile):
+class _ThetaProfile(_Profile):
     """For sampling the polar angle correctly in 3D"""
 
     def __init__(self):
@@ -16,12 +16,12 @@ class _ThetaProfile(Profile):
         return np.sin(r)
 
 
-class GalaxyComponent(abc.ABC):
+class _GalaxyComponent(abc.ABC):
     """Represent the component of a galaxy (e.g., bulge, disk etc)"""
 
     ndim = None
 
-    def __init__(self, n_objs, profile: Profile, mass=None, velocity_dispersion=0.1):
+    def __init__(self, n_objs, profile: _Profile, mass=None, velocity_dispersion=0.1):
         self.n_objs = n_objs
         self.mass = self.n_objs if mass is None else mass
         self.state = State.empty(n_objs, ndim=self.ndim)
@@ -38,7 +38,7 @@ class GalaxyComponent(abc.ABC):
         """Compute velocity directions (e.g. unit velocities according to positions)"""
 
 
-class Isotropic2D(GalaxyComponent):
+class Isotropic2D(_GalaxyComponent):
     """Galaxy profile that only depends on r (2-dimensional)"""
 
     ndim = 2
@@ -71,7 +71,7 @@ class Isotropic2D(GalaxyComponent):
         return vel
 
 
-class Isotropic3D(GalaxyComponent):
+class Isotropic3D(_GalaxyComponent):
     """Galaxy profile that only depends on r (3-dimensional)"""
 
     ndim = 3
@@ -110,7 +110,7 @@ class Isotropic3D(GalaxyComponent):
         return vel
 
 
-class Disk2D(GalaxyComponent):
+class Disk2D(_GalaxyComponent):
     """2D only disk component"""
 
     ndim = 2
@@ -144,7 +144,7 @@ class Disk2D(GalaxyComponent):
         return vel
 
 
-class Disk3D(GalaxyComponent):
+class Disk3D(_GalaxyComponent):
     """3D disk component with separate profiles for the surface density and height density"""
 
     ndim = 3
@@ -288,7 +288,6 @@ class Galaxy:
 
         self.state.pos = self.state.pos @ r
         self.state.vel = self.state.vel @ r
-
 
     def __add__(self, other):
         return Galaxy(self.state + other.state)

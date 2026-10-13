@@ -3,7 +3,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 
-class Profile(abc.ABC):
+class _Profile(abc.ABC):
     """Represent a density profile, allowing it to be sampled from"""
 
     def __init__(self, r_cutoff, **kwargs):
@@ -40,14 +40,14 @@ class Profile(abc.ABC):
         return samples
 
 
-class ConstantProfile(Profile):
+class ConstantProfile(_Profile):
     """Represent a constant density"""
 
     def density(self, r):
         return np.ones_like(r)
 
 
-class ExponentialProfile(Profile):
+class ExponentialProfile(_Profile):
     """Represent an exponential distribution"""
 
     def __init__(self, r_cutoff, h):
@@ -58,7 +58,7 @@ class ExponentialProfile(Profile):
         return np.exp(-r / self.h)
 
 
-class PlummerProfile(Profile):
+class PlummerProfile(_Profile):
     """Represent an Plummer distribution"""
 
     def __init__(self, r_cutoff, a):
@@ -69,7 +69,7 @@ class PlummerProfile(Profile):
         return 1 / self.a**3 * (1 + r**2 / self.a**2) ** (-5 / 2)
 
 
-class NFWProfile(Profile):
+class NFWProfile(_Profile):
     """Represent a Navarro Frenk White profile"""
 
     def __init__(self, r_cutoff, a):
@@ -80,7 +80,7 @@ class NFWProfile(Profile):
         return 1 / ((r+1E-5) / self.a) / (1 + r / self.a) ** 2
 
 
-class HernquistProfile(Profile):
+class HernquistProfile(_Profile):
     """Represent a Hernquist profile"""
 
     def __init__(self, r_cutoff, a):
@@ -91,7 +91,7 @@ class HernquistProfile(Profile):
         return self.a / (r+1E-5) / (r + self.a) ** 3
 
 
-class IsothermalProfile(Profile):
+class IsothermalProfile(_Profile):
     """Represernt an isothermal profile"""
 
     def __init__(self, r_cutoff, a):
