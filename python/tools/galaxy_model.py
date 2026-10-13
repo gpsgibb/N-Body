@@ -21,12 +21,13 @@ class _GalaxyComponent(abc.ABC):
 
     ndim = None
 
-    def __init__(self, n_objs, profile: _Profile, mass=None, velocity_dispersion=0.1):
+    def __init__(self, n_objs, profile: _Profile, mass=None, velocity_dispersion=0.1, tag=0):
         self.n_objs = n_objs
         self.mass = self.n_objs if mass is None else mass
         self.state = State.empty(n_objs, ndim=self.ndim)
         self.profile = profile
         self.velocity_dispersion = velocity_dispersion
+        self.tag = tag
 
     @abc.abstractmethod
     def star_positions(self):
@@ -115,11 +116,12 @@ class Disk2D(_GalaxyComponent):
 
     ndim = 2
 
-    def __init__(self, n_objs, disk_profile, mass=None, velocity_dispersion=0.1):
+    def __init__(self, n_objs, disk_profile, mass=None, velocity_dispersion=0.1, tag=0):
         self.n_objs = n_objs
         self.disk_profile = disk_profile
         self.mass = self.n_objs if mass is None else mass
         self.velocity_dispersion = velocity_dispersion
+        self.tag = tag
 
     def star_positions(self):
         r = self.disk_profile.sample(self.n_objs, self.ndim)
@@ -149,12 +151,13 @@ class Disk3D(_GalaxyComponent):
 
     ndim = 3
 
-    def __init__(self, n_objs, disk_profile, height_profile, mass=None, velocity_dispersion=0.1):
+    def __init__(self, n_objs, disk_profile, height_profile, mass=None, velocity_dispersion=0.1, tag=0):
         self.n_objs = n_objs
         self.disk_profile = disk_profile
         self.height_profile = height_profile
         self.mass = self.n_objs if mass is None else mass
         self.velocity_dispersion = velocity_dispersion
+        self.tag = tag
 
     def star_positions(self):
         r = self.disk_profile.sample(self.n_objs, ndim=2)
@@ -191,26 +194,31 @@ class Galaxy:
         positions_list = []
         velocities_list = []
         masses_list = []
+        tags_list = []
 
         # concatenate components
         for component in components_list:
             pos = component.star_positions()
             vel = component.star_velocities(pos)
             masses = np.ones(component.n_objs) * np.float64(component.mass) / np.float64(component.n_objs)
+            tags = np.full(component.n_objs, component.tag, dtype=np.int32)
 
             positions_list.append(pos)
             velocities_list.append(vel)
             masses_list.append(masses)
+            tags_list.append(tags)
 
         pos = np.vstack(positions_list)
         vel = np.vstack(velocities_list)
         mass = np.hstack(masses_list)
+        tag = np.hstack(tags_list)
 
         # create state
         state = State.empty(len(pos))
         state.pos[:, :] = pos[:, :]
         state.vel[:, :] = vel[:, :]
         state.mass[:] = mass[:]
+        state.tag[:] = tag[:]
 
         # Compute velocity magnitudes and apply
         r = np.sqrt((state.pos**2).sum(-1))
