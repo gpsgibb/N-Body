@@ -240,6 +240,10 @@ class Galaxy:
 
         self.state.mass *= m_req / m
 
+        # also need to modify velocities
+        # v^2 = GM/R -> velocity needs to be scaled by sqrt(m)
+        self.state.vel *= np.sqrt(m_req/m)
+
         print(f"Old mass = {m}, new_mass = {self.state.mass.sum()}")
 
     def write(self, filename, normalise_time=True):
