@@ -2,8 +2,8 @@ import abc
 import numpy as np
 import matplotlib.pyplot as plt
 
-from state import State
-from profiles import Profile
+from .state import State
+from .profiles import Profile
 
 
 class _ThetaProfile(Profile):
@@ -225,9 +225,12 @@ class Galaxy:
 
         state.vel *= vels[:, np.newaxis]
 
-        # remove mean velocity from system
-        v_mean = np.mean(state.vel, axis=0)
+        # remove mean (mass weighted) velocity from system
+        v_mean = np.sum(state.vel*state.mass[:, np.newaxis], axis=0) / state.mass.sum()
         state.vel -= v_mean[np.newaxis, :]
+
+        com = np.sum(state.pos*state.mass[:, np.newaxis], axis=0)/state.mass.sum()
+        state.pos -= com[np.newaxis, :]
 
         return Galaxy(state)
 
