@@ -297,5 +297,8 @@ class Galaxy:
         self.state.pos = self.state.pos @ r
         self.state.vel = self.state.vel @ r
 
+    def set_experiment_name(self, name):
+        self.state.name = name
+
     def __add__(self, other):
         return Galaxy(self.state + other.state)
