@@ -9,7 +9,7 @@ Writer<NDIM>::Writer(State<NDIM> &s): state(s) {
 template<std::size_t NDIM>
 void Writer<NDIM>::write() {
 
-    std::string filename = get_filename();
+    std::string filename = get_filename(state.name);
 
     H5::H5File file(filename, H5F_ACC_TRUNC);
 
@@ -17,6 +17,7 @@ void Writer<NDIM>::write() {
     create_attribute("time", state.t, file);
     create_attribute("iteration", hsize_t(state.it), file);
     create_attribute("n", hsize_t(n), file);
+    create_attribute("name", state.name, file);
 
     std::vector<double> doublebuf(n);
     std::vector<int> intbuf(n);
@@ -112,6 +113,15 @@ void Writer<NDIM>::create_attribute(std::string key, hsize_t value,  H5::H5File 
 
 
 template<std::size_t NDIM>
+void Writer<NDIM>::create_attribute(std::string key, std::string value,  H5::H5File file){
+    H5::DataSpace scalar(H5S_SCALAR);
+    H5::StrType strType(H5::PredType::C_S1, H5T_VARIABLE);
+    H5::Attribute attribute = file.createAttribute(key, strType, scalar);
+    attribute.write(strType, &value);
+}
+
+
+template<std::size_t NDIM>
 std::string Writer<NDIM>::get_filename(std::string root, int w, std::string ext){
     int i = state.it;
     std::ostringstream oss;
@@ -131,6 +141,7 @@ State<NDIM> Reader<NDIM>::read(std::string filename){
     std::size_t ndim, n;
     int it;
     double t;
+    std::string name;
 
     read_attribute("NDIM", ndim, file);
     if (ndim != NDIM) {
@@ -138,12 +149,13 @@ State<NDIM> Reader<NDIM>::read(std::string filename){
         std::exit(1);
     }
 
+    read_attribute("name", name, file);
     read_attribute("time", t, file);
     read_attribute("iteration", it, file);
     read_attribute("n", n, file);
 
     State<NDIM> state(n);
-
+    state.name = name;
     state.it = it;
     state.t = t;
 
@@ -216,6 +228,14 @@ void Reader<NDIM>::read_attribute(std::string key, std::size_t &value, H5::H5Fil
     hsize_t val;
     attr.read(H5::PredType::NATIVE_HSIZE, &val);
     value = std::size_t(val);
+}
+
+
+template<std::size_t NDIM>
+void Reader<NDIM>::read_attribute(std::string key, std::string &value, H5::H5File file){
+    H5::Attribute attr = file.openAttribute(key);
+    H5::StrType strType = attr.getStrType();
+    attr.read(strType, value);
 }
 
 

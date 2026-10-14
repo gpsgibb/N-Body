@@ -13,12 +13,14 @@ class State{
     public:
         double t;
         int it;
-        std::vector<Particle<NDIM>> particles; 
+        std::vector<Particle<NDIM>> particles;
+        std::string name;
     public: 
         State(int n){
             t = 0.0;
             it = 0;
             particles.resize(n);
+            name = "noname";
         }
 };
 
