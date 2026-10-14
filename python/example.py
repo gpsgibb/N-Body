@@ -17,6 +17,7 @@ bulge = Isotropic3D(1000, HernquistProfile(0.2, 0.1), 0.2, tag=2)
 gal = Galaxy.from_components([disk, bulge])
 # Rotate
 gal.rotate(30, 60)
+gal.set_experiment_name("example")
 gal.write("gal.h5")
 
 # N-Body code can now be run using this file as an input

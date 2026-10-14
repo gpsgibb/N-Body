@@ -16,6 +16,7 @@ class State:
     ndim: int
     iteration: int = 0
     time: float = 0.0
+    name: str = "default"
 
     @classmethod
     def read(cls, filename):
@@ -24,6 +25,7 @@ class State:
             time = h.attrs["time"]
             iteration = h.attrs["iteration"]
             ndim = h.attrs["NDIM"]
+            name = h.attrs["name"]
 
             pos = h["pos"][:]
             vel = h["vel"][:]
@@ -35,7 +37,7 @@ class State:
 
         print(f"Read state from {filename}")
 
-        return State(mass, pos, vel, acc, pe, ke, tag, ndim, iteration, time)
+        return State(mass, pos, vel, acc, pe, ke, tag, ndim, iteration, time, name)
 
     @classmethod
     def empty(cls, n, ndim=3):
@@ -58,6 +60,7 @@ class State:
             h.attrs["n"] = np.uint64(len(self.mass))
             h.attrs["iteration"] = np.uint64(self.iteration)
             h.attrs["NDIM"] = np.uint64(self.pos.shape[1])
+            h.attrs["name"] = self.name
 
             h.create_dataset("pos", data=self.pos)
             h.create_dataset("vel", data=self.vel)
@@ -80,6 +83,9 @@ class State:
         if self.ndim != other.ndim:
             raise ValueError("States are at different NDIMs")
 
+        if self.name != other.name:
+            raise ValueError("Names are not the same")
+
         n1 = len(self.mass)
         n2 = len(other.mass)
         n = n1 + n2
@@ -91,5 +97,8 @@ class State:
         state.pe = np.hstack((self.pe, other.pe))
         state.ke = np.hstack((self.ke, other.ke))
         state.tag = np.hstack(self.tag, other.tag)
+        state.name = self.name
+        state.time = self.time
+        state.it = self.it
 
         return state
