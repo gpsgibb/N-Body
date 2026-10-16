@@ -54,7 +54,9 @@ class State:
 
         return cls(mass, pos, vel, acc, pe, ke, tag, ndim, iteration, time)
 
-    def write(self, filename):
+    def write(self, filename=None):
+        if filename is None:
+            filename = f"{self.name}_{self.iteration:05d}.h5"
         with h5py.File(filename, "w") as h:
             h.attrs["time"] = np.float64(self.time)
             h.attrs["n"] = np.uint64(len(self.mass))

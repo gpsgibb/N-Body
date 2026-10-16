@@ -258,7 +258,7 @@ class Galaxy:
 
         print(f"Old mass = {m}, new_mass = {self.state.mass.sum()}")
 
-    def write(self, filename, normalise_time=True):
+    def write(self, filename=None, normalise_time=True):
         if normalise_time:
             self.normalise_masses_for_time()
         print("Writing galaxy to file")
