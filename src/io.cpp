@@ -208,6 +208,7 @@ State<NDIM> Reader<NDIM>::read(std::string filename){
     file.close();
 
     std::cout << "Read state from file " << filename << std::endl;
+    std::cout << "Number of particles = " << state.particles.size() << std::endl;
 
     return state;
 }
