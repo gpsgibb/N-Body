@@ -122,30 +122,3 @@ void Config::check_section_exists(std::string section){
     std::cerr << "Requested section " << section << " is not in the config" << std::endl;
     std::exit(1);
 }
-
-
-// get a value of specified type from the config (no default)
-template<typename T>
-T Config::get(std::string section, std::string key){
-    check_section_exists(section);
-    if (!(*config_dict[section]).count(key)){
-        std::cerr << "Requested key " << key << " does not exist in section " << section << std::endl;
-        std::exit(1);
-    }
-    std::string value = (*config_dict[section]).at(key);
-    std::istringstream iss(value);
-    T output;
-    iss >> output;
-
-    return output;
-}
-
-
-// get a value of specified type from the config (with provided default)
-template<typename T>
-T Config::get(std::string section, std::string key, T default_value){
-    check_section_exists(section);
-    if ((*config_dict[section]).count(key)) return get<T>(section, key);
-
-    return default_value;
-}
