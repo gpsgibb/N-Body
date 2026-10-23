@@ -69,6 +69,8 @@ class Isotropic2D(_GalaxyComponent):
         vel = np.asarray([u, v]).T
         vel += self.velocity_dispersion * dispersion
 
+        vel -= vel.mean(axis=0)
+
         return vel
 
 
@@ -108,6 +110,8 @@ class Isotropic3D(_GalaxyComponent):
 
         dispersion = np.random.normal(0, 1, (self.n_objs, self.ndim))
         vel += self.velocity_dispersion * dispersion
+
+        vel -= vel.mean(axis=0)
         return vel
 
 
@@ -142,6 +146,8 @@ class Disk2D(_GalaxyComponent):
         dispersion = np.random.normal(0, 1, (self.n_objs, self.ndim))
         vel = np.asarray([u, v]).T
         vel += self.velocity_dispersion * dispersion
+
+        vel -= vel.mean(axis=0)
 
         return vel
 
@@ -178,8 +184,11 @@ class Disk3D(_GalaxyComponent):
         w = np.zeros_like(u)
 
         dispersion = np.random.normal(0, 1, (self.n_objs, self.ndim))
+        dispersion[:,2] = 0.0
         vel = np.asarray([u, v, w]).T
         vel += self.velocity_dispersion * dispersion
+
+        vel -= vel.mean(axis=0)
 
         return vel
 
@@ -242,6 +251,12 @@ class Galaxy:
 
         return Galaxy(state)
 
+    def get_circular_velocity(self):
+        # Circular velocity = sqrt(GM(r)/r)
+        r = np.sqrt(np.var(self.state.pos, axis=0).sum())
+        vc = np.sqrt(self.state.mass.sum() / r)
+        return vc
+
     def normalise_masses_for_time(self):
         """Adjust masses so t=1 represents a crossing time"""
         # t_c = sqrt(r^3/M) -> M = r**3/1**2
@@ -264,11 +279,15 @@ class Galaxy:
         print("Writing galaxy to file")
         self.state.write(filename)
 
-    def shift(self, pos, vel):
+    def shift(self, pos=None, vel=None):
         """Shift whole galaxy"""
 
-        self.state.pos += pos[np.newaxis, :]
-        self.state.vel += vel[np.newaxis, :]
+        if pos is not None:
+            pos = np.asarray(pos)
+            self.state.pos += pos[np.newaxis, :]
+        if vel is not None:
+            vel = np.asarray(vel)
+            self.state.vel += vel[np.newaxis, :]
 
     def rotate(self, xz_rot, xy_rot):
         """Apply a rotation first about the xz plane, then about the xy plane"""

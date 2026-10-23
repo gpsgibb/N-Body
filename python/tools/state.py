@@ -98,9 +98,9 @@ class State:
         state.acc = np.vstack((self.acc, other.acc))
         state.pe = np.hstack((self.pe, other.pe))
         state.ke = np.hstack((self.ke, other.ke))
-        state.tag = np.hstack(self.tag, other.tag)
+        state.tag = np.hstack((self.tag, other.tag))
         state.name = self.name
         state.time = self.time
-        state.it = self.it
+        state.iteration = self.iteration
 
         return state
