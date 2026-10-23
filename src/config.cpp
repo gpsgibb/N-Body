@@ -23,9 +23,23 @@ std::list<std::string> load_file(std::string filename){
 }
 
 
+void strip_leading_and_trailing_whitespace(std::string &line){
+    std::size_t start = line.find_first_not_of(' ');
+    std::size_t stop = line.find_last_not_of(' ')+1;
+
+    if (start >= stop){
+        start=line.size();
+    }
+
+    line.erase(0, start);
+    line.erase(stop-start);
+
+}
+
+
 void strip_whitespace(std::list<std::string> &lines){
     for (std::string &line: lines){
-        line.erase(std::remove_if(line.begin(),line.end(), ::isspace), line.end());
+        strip_leading_and_trailing_whitespace(line);
     }
 }
 
@@ -59,8 +73,8 @@ bool is_key_value_pair(std::string s){
 std::map<std::string, std::unique_ptr<std::map<std::string, std::string>>> read_config(std::string filename){
     std::list<std::string> lines = load_file(filename);
 
-    strip_whitespace(lines);
     strip_comments(lines);
+    strip_whitespace(lines);
     strip_blanklines(lines);
 
     std::map<std::string, std::unique_ptr<std::map<std::string, std::string>>> config_dict;
@@ -81,6 +95,11 @@ std::map<std::string, std::unique_ptr<std::map<std::string, std::string>>> read_
             std::size_t loc = line.find('=');
             key = line.substr(0, loc);
             value = line.substr(loc+1);
+
+            // handle trailing whitespace around the "="
+            strip_leading_and_trailing_whitespace(key);
+            strip_leading_and_trailing_whitespace(value);
+
             (*config_dict[section])[key] = value;
             
         } else {
@@ -90,7 +109,6 @@ std::map<std::string, std::unique_ptr<std::map<std::string, std::string>>> read_
     }
 
     return config_dict;
-
 }
 
 
