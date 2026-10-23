@@ -6,8 +6,11 @@
 #include "iterator.hpp"
 #include "forces.hpp"
 #include "io.hpp"
+#include "config.hpp"
 
 int main(int argc, char** argv){
+
+    Config config("config.conf");
 
     int n = 1000;
     const std::size_t NDIM = 3;
