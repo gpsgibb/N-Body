@@ -3,8 +3,8 @@
 #include "omp.h"
 
 template<std::size_t NDIM>
-Iterator<NDIM>::Iterator(State<NDIM> &s, Integrator<NDIM> &intgrtr, int mxits): state(s), integrator(intgrtr), writer(Writer<NDIM>(s)) {
-    maxits = mxits;
+Iterator<NDIM>::Iterator(State<NDIM> &s, Integrator<NDIM> &intgrtr, Config &config): state(s), integrator(intgrtr), writer(Writer<NDIM>(s)) {
+    maxits = config.get<int>("iterator","maxits");
 }
 
 

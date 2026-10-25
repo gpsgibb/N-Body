@@ -6,13 +6,14 @@
 #include "iterator.hpp"
 #include "forces.hpp"
 #include "io.hpp"
+#include "config.hpp"
 
 int main(int argc, char** argv){
 
+    Config config("config.conf");
+
     int n = 1000;
     const std::size_t NDIM = 3;
-    double dt = 0.002;
-    dt = 0.01;
 
     State<NDIM> state(n);
 
@@ -33,11 +34,11 @@ int main(int argc, char** argv){
         return 1;
     }
 
-    KDTree<NDIM> tree(state.particles);
-
+    // condtruct objects required for N-body simulation
+    KDTree<NDIM> tree(state.particles, config);
     KDTreeGravForce<NDIM> force(state.particles, tree);
-    BlockTimestepIntegrator<NDIM> integrator(state, force, dt);
-    Iterator<NDIM> iterator(state, integrator, 1000);
+    BlockTimestepIntegrator<NDIM> integrator(state, force, config);
+    Iterator<NDIM> iterator(state, integrator, config);
 
     iterator.start();
 

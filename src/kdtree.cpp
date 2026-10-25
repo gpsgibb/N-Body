@@ -107,8 +107,10 @@ std::array<tuple, NDIM> add_bounding_box(std::array<tuple, NDIM> b1, std::array<
 
 // KDTree initialiser
 template<std::size_t NDIM>
-KDTree<NDIM>::KDTree(std::vector<Particle<NDIM>> &pars): particles(pars) {
+KDTree<NDIM>::KDTree(std::vector<Particle<NDIM>> &pars, Config &config): particles(pars) {
     std::size_t n = particles.size();
+    mac_condition = config.get<double>("forces", "multipole_acceptance_criterion");
+    smoothing_size = config.get<double>("forces", "smoothing_size");
 
     // initialise indices array
     indices.resize(n);
@@ -293,7 +295,7 @@ std::array<double, NDIM> KDTree<NDIM>::calc_force_from_node(std::size_t node_idx
         rsq += r[i]*r[i];
     }
 
-    mac = (pow(node.size, 2) / rsq) > pow(MAC_CONDITION, 2);
+    mac = (pow(node.size, 2) / rsq) > pow(mac_condition, 2);
     self = node.idx == par_idx;
 
     if (self || mac || contained){
@@ -314,7 +316,7 @@ std::array<double, NDIM> KDTree<NDIM>::calc_force_from_node(std::size_t node_idx
                 r[i] = particles[node.idx].pos[i] - par.pos[i];
                 rsq += r[i]*r[i];
             }
-            double rcubed = pow(rsq + pow(SMOOTHING_SIZE, 2), 1.5);
+            double rcubed = pow(rsq + pow(smoothing_size, 2), 1.5);
             for (std::size_t i=0;i<NDIM;i++){
                 force[i] += particles[node.idx].mass* r[i] / rcubed;
             }
@@ -322,7 +324,7 @@ std::array<double, NDIM> KDTree<NDIM>::calc_force_from_node(std::size_t node_idx
     } else {
         // evaluate force from this node and exit
         // f = M r / (|r|+a)**3
-        double rcubed = pow(rsq + pow(SMOOTHING_SIZE,2), 1.5);
+        double rcubed = pow(rsq + pow(smoothing_size,2), 1.5);
         for (std::size_t i=0;i<NDIM;i++){
             force[i] = node.mass * r[i] / rcubed;
         }
@@ -488,7 +490,7 @@ double KDTree<NDIM>::potential_energy_from_node(std::size_t node_idx, std::size_
         rsq += r[i]*r[i];
     }
 
-    mac = (pow(node.size, 2) / rsq) > pow(MAC_CONDITION, 2);
+    mac = (pow(node.size, 2) / rsq) > pow(mac_condition, 2);
     self = node.idx == par_idx;
 
     if (self || mac || contained){
@@ -504,12 +506,12 @@ double KDTree<NDIM>::potential_energy_from_node(std::size_t node_idx, std::size_
                 r[i] = particles[node.idx].pos[i] - par.pos[i];
                 rsq += r[i]*r[i];
             }
-            pe += -(par.mass * particles[node.idx].mass) / sqrt(rsq + pow(SMOOTHING_SIZE, 2));
+            pe += -(par.mass * particles[node.idx].mass) / sqrt(rsq + pow(smoothing_size, 2));
         }
     } else {
         // evaluate PE from this node and exit
         // PE = -M1M2 / sqrt(r**2 + a**2)
-        pe += -(par.mass * node.mass) / sqrt(rsq + pow(SMOOTHING_SIZE, 2));
+        pe += -(par.mass * node.mass) / sqrt(rsq + pow(smoothing_size, 2));
     }
 
     return pe;
