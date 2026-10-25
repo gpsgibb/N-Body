@@ -569,8 +569,8 @@ void KDTree<NDIM>::ball_search_node(std::size_t node_idx, std::size_t i, double 
     }
 
     // search children
-    ball_search_node(node.lower, i, r, inds);
-    ball_search_node(node.upper, i, r, inds);
+    if (node.lower >= 0) ball_search_node(node.lower, i, r, inds);
+    if (node.upper >=0 ) ball_search_node(node.upper, i, r, inds);
 
 }
 
