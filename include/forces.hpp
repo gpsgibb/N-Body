@@ -41,9 +41,6 @@ class KDTreeGravForce: public Force<NDIM>{
     public:
         KDTreeGravForce(KDTree<NDIM> &kdtree);
         std::array<double, NDIM> get_force(std::size_t i) override;
-        // void full_update() override;
-        // void partial_update() override;
-        // double get_interaction_lengthscale(std::size_t i) override;
         double get_energy(std::size_t i) override;
 };
 
