@@ -2,7 +2,6 @@
 #include <fstream>
 #include <algorithm>
 #include <list>
-#include <sstream>
 
 #include "config.hpp"
 

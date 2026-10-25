@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <sstream>
 
 class Config{
     private:
