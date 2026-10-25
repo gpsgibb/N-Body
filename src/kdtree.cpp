@@ -83,10 +83,10 @@ double bounding_box_size(std::array<tuple, NDIM> box){
 
 // checks if particle is contained by a bounding box
 template<std::size_t NDIM>
-bool contained_by_bounding_box(std::array<tuple, NDIM> box, std::array<double, NDIM> pos){
+bool contained_by_bounding_box(std::array<tuple, NDIM> box, std::array<double, NDIM> pos, double inflate=0.0){
     bool is_contained = 1;
     for (std::size_t i=0;i<NDIM;i++){
-        is_contained &= (pos[i] >= box[i][0]) & (pos[i] <= box[i][1]);
+        is_contained &= (pos[i] >= box[i][0]-inflate) & (pos[i] <= box[i][1]+inflate);
     }
 
     return is_contained;
@@ -533,6 +533,44 @@ void KDTree<NDIM>::save_tree(std::string filename){
     out.write((char*) &n, sizeof(std::size_t));
     out.write((char*) &size, sizeof(std::size_t));
     out.write((char*) nodes.data(), nodes.size() * size);
+
+}
+
+
+// Return indices of particles a maximum distance of r from particle i
+template<std::size_t NDIM>
+std::vector<std::size_t> KDTree<NDIM>::ball_search(std::size_t i, double r, std::size_t nneighbour_guess){
+    std::vector<std::size_t> inds;
+    inds.reserve(nneighbour_guess);
+
+    ball_search_node(0, i, r, inds);
+
+    return inds;
+}
+
+
+// search for neighbours closer than r to object i inside node node_idx
+template<std::size_t NDIM>
+void KDTree<NDIM>::ball_search_node(std::size_t node_idx, std::size_t i, double r, std::vector<std::size_t> &inds){
+    std::array<double, NDIM> pos = particles[i].pos;
+    TreeNode<NDIM> node = nodes[node_idx];
+
+    // determine if object is contained within this node's bounding box (inflated by r)
+    // if not, return as nothing to do here
+    if (!contained_by_bounding_box(node.bounding_box, pos, r)) return;
+
+    // If particle represented by node is within r from object of interest, add it to the indices list
+    if (node.idx != i){
+        double distsq = 0;
+        for (std::size_t k=0;k<NDIM;k++){
+            distsq += pow(pos[k] - particles[node.idx].pos[k], 2);
+        }
+        if (distsq <= r*r) inds.push_back(node.idx);
+    }
+
+    // search children
+    ball_search_node(node.lower, i, r, inds);
+    ball_search_node(node.upper, i, r, inds);
 
 }
 
