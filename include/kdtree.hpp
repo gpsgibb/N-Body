@@ -7,11 +7,9 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include "config.hpp"
 
 typedef std::array<double, 2> tuple;
-
-const double MAC_CONDITION = 0.5;
-const double SMOOTHING_SIZE = 1E-3;
 
 template<std::size_t NDIM>
 struct TreeNode{
@@ -31,9 +29,11 @@ class KDTree{
         std::vector<TreeNode<NDIM>> nodes;
         std::vector<Particle<NDIM>> &particles;
         std::vector<std::size_t> indices;
+        double mac_condition;
+        double smoothing_size;
 
     public:
-        KDTree(std::vector<Particle<NDIM>> &pars);
+        KDTree(std::vector<Particle<NDIM>> &pars, Config &config);
         void construct_tree();
         std::array<double, NDIM> evaluate_force(std::size_t ind);
         void save_tree(std::string filename);
