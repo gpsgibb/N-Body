@@ -1,28 +1,24 @@
 #ifndef INTEGRATOR_H
 #define INTEGRATOR_H
 
-#include <state.hpp>
+#include "state.hpp"
 #include "kdtree.hpp"
 #include "forces.hpp"
-
-// Parameter to control the minimum timestep. Smaller = shorter timestep
-const double TIMESTEP_ETA = 0.02;
-
-// Minimum timestep for an integrator =  dt/2**MAXDEPTH
-const int MAXDEPTH = 10;
-
-// ratio of Integrator's timestep and the minimum allowed timestep
-const int SMALLEST_TIMESTEP_RATIO = pow(2, MAXDEPTH);
+#include "config.hpp"
 
 template<std::size_t NDIM>
 class Integrator{
     protected:
         double dt;
+        double eta;
+        // NOTE: the following two are only needed in variable timestep subclasses but are included here for simplicity
+        int max_allowed_depth;
+        int smallest_timestep_ratio;
         State<NDIM> &state;
         Force<NDIM> &force;
 
     public:
-        Integrator(State<NDIM> &s, Force<NDIM> &force, double timestep);
+        Integrator(State<NDIM> &s, Force<NDIM> &force, Config &config);
         virtual void step();
         void compute_energy();
 
@@ -37,7 +33,7 @@ class Integrator{
 template<std::size_t NDIM>
 class EulerIntegrator: public Integrator<NDIM>{
     public:
-        EulerIntegrator(State<NDIM> &s, Force<NDIM> &force, double dt);
+        EulerIntegrator(State<NDIM> &s, Force<NDIM> &force, Config &config);
     protected:
         void _step(double dt) override;
 };
@@ -46,7 +42,7 @@ class EulerIntegrator: public Integrator<NDIM>{
 template<std::size_t NDIM>
 class AdaptiveTimestepEulerIntegrator: public EulerIntegrator<NDIM>{
     public:
-        AdaptiveTimestepEulerIntegrator(State<NDIM> &s, Force<NDIM> &force, double dt);
+        AdaptiveTimestepEulerIntegrator(State<NDIM> &s, Force<NDIM> &force, Config &config);
         void step() override;
 };
 
@@ -56,7 +52,7 @@ class VelocityVerletIntegrator: public Integrator<NDIM>{
     private:
         std::vector<Particle<NDIM>> old_particles;
     public:
-        VelocityVerletIntegrator(State<NDIM> &s, Force<NDIM> &force, double dt);
+        VelocityVerletIntegrator(State<NDIM> &s, Force<NDIM> &force, Config &config);
     protected:
         void _step(double dt) override;
 };
@@ -65,7 +61,7 @@ class VelocityVerletIntegrator: public Integrator<NDIM>{
 template<std::size_t NDIM>
 class AdaptiveTimestepVelocityVerletIntegrator: public VelocityVerletIntegrator<NDIM>{
     public:
-        AdaptiveTimestepVelocityVerletIntegrator(State<NDIM> &s, Force<NDIM> &force, double dt);
+        AdaptiveTimestepVelocityVerletIntegrator(State<NDIM> &s, Force<NDIM> &force, Config &config);
         void step() override;
 };
 
@@ -78,7 +74,7 @@ class BlockTimestepIntegrator: public Integrator<NDIM>{
         std::vector<int> depths;
 
     public:
-        BlockTimestepIntegrator(State<NDIM> &s, Force<NDIM> &force, double dt);
+        BlockTimestepIntegrator(State<NDIM> &s, Force<NDIM> &force, Config &config);
 
     private:
         void _step(double dt) override;

@@ -1,11 +1,15 @@
-#include <integrator.hpp>
 #include <iostream>
 #include <cmath>
 #include <map>
 
+#include <integrator.hpp>
+
 template<std::size_t NDIM>
-Integrator<NDIM>::Integrator(State<NDIM> &s, Force<NDIM> &force, double timestep): state(s), force(force) {
-    dt = timestep;
+Integrator<NDIM>::Integrator(State<NDIM> &s, Force<NDIM> &force, Config &config): state(s), force(force) {
+    dt = config.get<double>("integrator", "timestep");
+    eta = config.get<double>("integrator", "eta");
+    max_allowed_depth = config.get<int>("integrator", "maxdepth");
+    smallest_timestep_ratio = pow(2, max_allowed_depth);
 
     // Compute force on all particles
     // This is because all integrators assume the initial state is pos(t), vel(t), acc(t)
@@ -76,7 +80,7 @@ double Integrator<NDIM>::timestep_for_particle(std::size_t i){
 
     double rmin = force.get_interaction_lengthscale(i);
 
-    return TIMESTEP_ETA * sqrt(rmin / acc);
+    return eta * sqrt(rmin / acc);
 }
 
 
@@ -96,7 +100,7 @@ double Integrator<NDIM>::get_min_timestep(){
 
 
 template<std::size_t NDIM>
-EulerIntegrator<NDIM>::EulerIntegrator(State<NDIM> &s, Force<NDIM> &f, double dt): Integrator<NDIM>(s, f, dt){
+EulerIntegrator<NDIM>::EulerIntegrator(State<NDIM> &s, Force<NDIM> &f, Config &config): Integrator<NDIM>(s, f, config){
     std::cout << "Initialising EulerIntegrator\n";
 }
 
@@ -128,7 +132,7 @@ template class EulerIntegrator<3>;
 
 
 template<std::size_t NDIM>
-VelocityVerletIntegrator<NDIM>::VelocityVerletIntegrator(State<NDIM> &s, Force<NDIM> &f, double dt): Integrator<NDIM>(s, f, dt){
+VelocityVerletIntegrator<NDIM>::VelocityVerletIntegrator(State<NDIM> &s, Force<NDIM> &f, Config &config): Integrator<NDIM>(s, f, config){
     std::cout << "Initialising VelocityVerletIntegrator\n";
 }
 
@@ -168,8 +172,8 @@ template class VelocityVerletIntegrator<3>;
 
 template<std::size_t NDIM>
 AdaptiveTimestepEulerIntegrator<NDIM>::AdaptiveTimestepEulerIntegrator(
-    State<NDIM> &s, Force<NDIM> &f, double dt
-): EulerIntegrator<NDIM>(s, f, dt)
+    State<NDIM> &s, Force<NDIM> &f, Config &config
+): EulerIntegrator<NDIM>(s, f, config)
 {
     std::cout << "Initialising AdaptiveTimestepEulerIntegrator" << std::endl;
 }
@@ -183,8 +187,8 @@ void AdaptiveTimestepEulerIntegrator<NDIM>::step(){
     while (this->state.t < stoptime){
         dt_local = this->get_min_timestep();
 
-        if (dt_local < this->dt/SMALLEST_TIMESTEP_RATIO){
-            dt_local = this->dt/SMALLEST_TIMESTEP_RATIO;
+        if (dt_local < this->dt/this->smallest_timestep_ratio){
+            dt_local = this->dt/this->smallest_timestep_ratio;
             std::cout << "WARNING: minimum timestep reached!" << std::endl;
         }
 
@@ -212,8 +216,8 @@ template class AdaptiveTimestepEulerIntegrator<3>;
 
 template<std::size_t NDIM>
 AdaptiveTimestepVelocityVerletIntegrator<NDIM>::AdaptiveTimestepVelocityVerletIntegrator(
-    State<NDIM> &s, Force<NDIM> &f, double dt
-): VelocityVerletIntegrator<NDIM>(s, f, dt)
+    State<NDIM> &s, Force<NDIM> &f, Config &config
+): VelocityVerletIntegrator<NDIM>(s, f, config)
 {
     std::cout << "Initialising AdaptiveTimestepVelocityVerletIntegrator" << std::endl;
 }
@@ -227,8 +231,8 @@ void AdaptiveTimestepVelocityVerletIntegrator<NDIM>::step(){
     while (this->state.t < stoptime){
         dt_local = this->get_min_timestep();
 
-        if (dt_local < this->dt/SMALLEST_TIMESTEP_RATIO){
-            dt_local = this->dt/SMALLEST_TIMESTEP_RATIO;
+        if (dt_local < this->dt/this->smallest_timestep_ratio){
+            dt_local = this->dt/this->smallest_timestep_ratio;
             std::cout << "WARNING: minimum timestep reached!" << std::endl;
         }
 
@@ -253,7 +257,7 @@ template class AdaptiveTimestepVelocityVerletIntegrator<3>;
 
 
 template<std::size_t NDIM>
-BlockTimestepIntegrator<NDIM>::BlockTimestepIntegrator(State<NDIM> &s, Force<NDIM> &f, double dt): Integrator<NDIM>(s, f, dt){
+BlockTimestepIntegrator<NDIM>::BlockTimestepIntegrator(State<NDIM> &s, Force<NDIM> &f, Config &config): Integrator<NDIM>(s, f, config){
 
     // copy of the particles. This is needed as we need to store the old positions/velocities/forces of the particles
     old_pars = this->state.particles;
@@ -272,9 +276,9 @@ double BlockTimestepIntegrator<NDIM>::assign_timestep_to_particle(std::size_t i)
     int n;
     double dt_i = this->timestep_for_particle(i);
     n = std::max(0, int(ceil(log2(this->dt/dt_i))));
-    if (n > MAXDEPTH){
+    if (n > this->max_allowed_depth){
         //std::cerr << "Warning timestep for particle smaller than the minimum allowed timestep" << std::endl;
-        n = MAXDEPTH;
+        n = this->max_allowed_depth;
     }
     depths[i] = n;
     return dt_i;
