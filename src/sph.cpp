@@ -1,6 +1,7 @@
 #include "sph.hpp"
 #include <cmath>
 
+// kernels
 
 template<std::size_t NDIM>
 double SPHKernel<NDIM>::evaluate(double r, double h){
@@ -37,6 +38,7 @@ CubicKernel<NDIM>::CubicKernel(){
         this -> norm = 1.0 / M_PI;
     }
 }
+
 
 template<std::size_t NDIM>
 double CubicKernel<NDIM>::kernel_function(double q){
@@ -90,3 +92,24 @@ double WendlandKernel<NDIM>::kernel_function_deriv(double q){
 
 template class WendlandKernel<2>;
 template class WendlandKernel<3>;
+
+
+// Equations of state
+
+TaitEOS::TaitEOS(double rho0, double gamma, double cs): rho0(rho0), gamma(gamma), cs(cs){}
+double TaitEOS::get_pressure(double rho){
+    return rho0*cs*cs/gamma * (pow(rho/rho0, gamma) - 1);
+}
+
+
+IsothermalEOS::IsothermalEOS(double rho0, double cs): rho0(rho0), cs(cs){}
+double IsothermalEOS::get_pressure(double rho){
+    return cs*cs*(rho-rho0);
+}
+
+
+IdealGasEOS::IdealGasEOS(double rho0, double gamma, double k): rho0(rho0), gamma(gamma), k(k){}
+double IdealGasEOS::get_pressure(double rho){
+    return k * pow(rho, gamma);
+}
+
