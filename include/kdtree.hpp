@@ -3,11 +3,11 @@
 
 #include <vector>
 #include <array>
-#include "particle.hpp"
 #include <string>
 #include <fstream>
 #include <iostream>
-#include <list>
+
+#include "particle.hpp"
 #include "config.hpp"
 
 typedef std::array<double, 2> tuple;
