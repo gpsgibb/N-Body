@@ -575,5 +575,72 @@ void KDTree<NDIM>::ball_search_node(std::size_t node_idx, std::size_t i, double 
 }
 
 
+// get k nearest neighbours to point i
+template<std::size_t NDIM>
+std::list<Neighbour> KDTree<NDIM>::k_nearest_neighbours(std::size_t i, std::size_t k){
+    std::list<Neighbour> neighbourlist;
+
+    k_nearest_neighbours_for_node(0, i, k, neighbourlist);
+
+    // list contains r^2 not r so get sqrt here
+    for (Neighbour &n: neighbourlist){
+        n.r = sqrt(n.r);
+    }
+
+    return neighbourlist;
+}
+
+
+// get k nearest neighbours for node node_idx
+template<std::size_t NDIM>
+void KDTree<NDIM>::k_nearest_neighbours_for_node(std::size_t node_idx, std::size_t i, std::size_t k, std::list<Neighbour> &neighbourlist){
+    TreeNode node = nodes[node_idx];
+    std::array<double,NDIM> pos = particles.at(i).pos;
+    std::array<double,NDIM> nodepos = particles.at(node.idx).pos;
+
+    // distance from particle i to node node_idx
+    if (i != node.idx){
+        double r=0.0;
+        for (std::size_t k=0;k<NDIM;k++){
+            r += pow(pos[k] - nodepos[k], 2);
+        }
+
+        bool update = false;
+        // add this position to the node list if certain conditions are met
+        if (neighbourlist.size() < k){
+            neighbourlist.push_back(Neighbour{node.idx, r});
+            update = true;
+        } else if (r < neighbourlist.back().r){
+            neighbourlist.pop_back();
+            neighbourlist.push_back(Neighbour{node.idx, r});
+            update = true;
+        }
+
+        if (update) {
+            neighbourlist.sort([](auto a, auto b){return a.r < b.r;});
+        }
+    }
+
+    // determine child node which contains point i, and the child node that does not
+    long containing, not_containing;
+    if (pos[node.dim] < nodepos[node.dim]){
+        containing = node.lower;
+        not_containing = node.upper;
+    } else {
+        containing = node.upper;
+        not_containing = node.lower;
+    }
+
+    // look in node containing particle i
+    if (containing >= 0) k_nearest_neighbours_for_node(containing, i, k, neighbourlist);
+
+    // Look in the other child node only if it is closer than the furthest "nearest" particle in the neighbourlist
+    if (abs(pos[node.dim] - nodepos[node.dim]) < neighbourlist.back().r || neighbourlist.size() < k){
+        if (not_containing >= 0) k_nearest_neighbours_for_node(not_containing, i, k, neighbourlist);
+    }
+
+}
+
+
 template class KDTree<2>;
 template class KDTree<3>;
