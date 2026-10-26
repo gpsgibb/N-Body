@@ -68,19 +68,7 @@ void Integrator<NDIM>::update_forces_for_all_particles(){
 // get the timestep for particle i
 template<std::size_t NDIM>
 double Integrator<NDIM>::timestep_for_particle(std::size_t i){
-    Particle<NDIM> &par = state.particles[i];
-
-    // compute |acceleration| on particle
-    // (initialise to small non-zero value to avoid division by 0)
-    double acc = 1E-5;
-    for (std::size_t k=0; k<NDIM;k++){
-        acc += pow(par.acc[k], 2);
-    }
-    acc = sqrt(acc);
-
-    double rmin = force.get_interaction_lengthscale(i);
-
-    return eta * sqrt(rmin / acc);
+    return eta * this->force.compute_interaction_timescale(i);
 }
 
 
