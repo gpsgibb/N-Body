@@ -100,16 +100,25 @@ TaitEOS::TaitEOS(double rho0, double gamma, double cs): rho0(rho0), gamma(gamma)
 double TaitEOS::get_pressure(double rho){
     return rho0*cs*cs/gamma * (pow(rho/rho0, gamma) - 1);
 }
-
+double TaitEOS::get_soundspeed(double rho){
+    return cs*pow(rho/rho0, (gamma-1)/2);
+}
 
 IsothermalEOS::IsothermalEOS(double rho0, double cs): rho0(rho0), cs(cs){}
 double IsothermalEOS::get_pressure(double rho){
     return cs*cs*(rho-rho0);
+}
+double IsothermalEOS::get_soundspeed(double rho){
+    (void) rho;
+    return cs;
 }
 
 
 IdealGasEOS::IdealGasEOS(double rho0, double gamma, double k): rho0(rho0), gamma(gamma), k(k){}
 double IdealGasEOS::get_pressure(double rho){
     return k * pow(rho, gamma);
+}
+double IdealGasEOS::get_soundspeed(double rho){
+    return sqrt(gamma * pow(rho, gamma-1));
 }
 

@@ -44,6 +44,7 @@ class WendlandKernel: public SPHKernel<NDIM>{
 class SPHEquationOfState{
     public:
         virtual double get_pressure(double rho) = 0;
+        virtual double get_soundspeed(double rho) = 0;
 };
 
 
@@ -51,6 +52,7 @@ class TaitEOS: public SPHEquationOfState{
     public:
         TaitEOS(double rho0, double gamma, double cs);
         double get_pressure(double rho) override;
+        double get_soundspeed(double rho) override;
     private:
         const double rho0;
         const double gamma;
@@ -62,6 +64,7 @@ class IsothermalEOS: public SPHEquationOfState{
     public:
         IsothermalEOS(double rho0, double cs);
         double get_pressure(double rho) override;
+        double get_soundspeed(double rho) override;
     private:
         const double rho0;
         const double cs;
@@ -72,6 +75,7 @@ class IdealGasEOS: public SPHEquationOfState{
     public:
         IdealGasEOS(double rho0, double gamma, double k);
         double get_pressure(double rho) override;
+        double get_soundspeed(double rho) override;
     private:
         const double rho0;
         const double gamma;
