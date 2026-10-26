@@ -14,7 +14,7 @@ void argsort(
     std::size_t start,
     std::size_t stop
 ){
-    sort(
+    std::sort(
         indices.begin()+start, indices.begin()+stop,
         [dim, &particles](std::size_t i, std::size_t j){
             return particles[i].pos[dim] < particles[j].pos[dim];
@@ -577,8 +577,8 @@ void KDTree<NDIM>::ball_search_node(std::size_t node_idx, std::size_t i, double 
 
 // get k nearest neighbours to point i
 template<std::size_t NDIM>
-std::list<Neighbour> KDTree<NDIM>::k_nearest_neighbours(std::size_t i, std::size_t k){
-    std::list<Neighbour> neighbourlist;
+std::vector<Neighbour> KDTree<NDIM>::k_nearest_neighbours(std::size_t i, std::size_t k){
+    std::vector<Neighbour> neighbourlist;
 
     k_nearest_neighbours_for_node(0, i, k, neighbourlist);
 
@@ -593,7 +593,7 @@ std::list<Neighbour> KDTree<NDIM>::k_nearest_neighbours(std::size_t i, std::size
 
 // get k nearest neighbours for node node_idx
 template<std::size_t NDIM>
-void KDTree<NDIM>::k_nearest_neighbours_for_node(std::size_t node_idx, std::size_t i, std::size_t k, std::list<Neighbour> &neighbourlist){
+void KDTree<NDIM>::k_nearest_neighbours_for_node(std::size_t node_idx, std::size_t i, std::size_t k, std::vector<Neighbour> &neighbourlist){
     TreeNode node = nodes[node_idx];
     std::array<double,NDIM> pos = particles.at(i).pos;
     std::array<double,NDIM> nodepos = particles.at(node.idx).pos;
@@ -617,7 +617,7 @@ void KDTree<NDIM>::k_nearest_neighbours_for_node(std::size_t node_idx, std::size
         }
 
         if (update) {
-            neighbourlist.sort([](auto a, auto b){return a.r < b.r;});
+            sort(neighbourlist.begin(), neighbourlist.end(), [](auto a, auto b){return a.r < b.r;});
         }
     }
 
@@ -635,10 +635,9 @@ void KDTree<NDIM>::k_nearest_neighbours_for_node(std::size_t node_idx, std::size
     if (containing >= 0) k_nearest_neighbours_for_node(containing, i, k, neighbourlist);
 
     // Look in the other child node only if it is closer than the furthest "nearest" particle in the neighbourlist
-    if (abs(pos[node.dim] - nodepos[node.dim]) < neighbourlist.back().r || neighbourlist.size() < k){
+    if (pow(pos[node.dim] - nodepos[node.dim], 2) < neighbourlist.back().r || neighbourlist.size() < k){
         if (not_containing >= 0) k_nearest_neighbours_for_node(not_containing, i, k, neighbourlist);
     }
-
 }
 
 
