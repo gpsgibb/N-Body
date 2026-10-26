@@ -1,3 +1,4 @@
+#include <filesystem>
 #include "io.hpp"
 
 template<std::size_t NDIM>
@@ -136,6 +137,12 @@ template class Writer<2>;
 
 template<std::size_t NDIM>
 State<NDIM> Reader<NDIM>::read(std::string filename){
+
+    if (!std::filesystem::exists(filename)){
+        std::cerr << "Input file " << filename << " cannot be read. Please ensure it exists and is readable" << std::endl;
+        std::exit(1);
+    }
+
     H5::H5File file(filename, H5F_ACC_RDONLY);
 
     std::size_t ndim, n;
