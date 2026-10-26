@@ -12,6 +12,11 @@ std::list<std::string> load_file(std::string filename){
     std::string line;
     std::list<std::string> lines;
 
+    if (!file) {
+        std::cerr << "Config file " << filename << " cannot be opened. Please ensure the file exists and is readable" << std::endl;
+        std::exit(1);
+    }
+
     while (std::getline(file, line)){
         lines.push_back(line);
     }
