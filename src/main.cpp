@@ -36,8 +36,8 @@ int main(int argc, char** argv){
 
     // condtruct objects required for N-body simulation
     KDTree<NDIM> tree(state.particles, config);
-    KDTreeGravForce<NDIM> force(tree);
-    ForceContainer<NDIM> force_container(tree);
+    KDTreeGravForce<NDIM> force(tree, state.particles);
+    ForceContainer<NDIM> force_container(tree, state.particles);
     force_container.register_force(&force);
     BlockTimestepIntegrator<NDIM> integrator(state, force_container, config);
     Iterator<NDIM> iterator(state, integrator, config);
