@@ -11,13 +11,15 @@ template<std::size_t NDIM>
 class Force{
     protected:
         KDTree<NDIM> &kdtree;
+        std::vector<Particle<NDIM>> &particles;
     public:
-        Force(KDTree<NDIM> &kdtree): kdtree(kdtree) {};
+        Force(KDTree<NDIM> &kdtree, std::vector<Particle<NDIM>> &particles): kdtree(kdtree), particles(particles){};
         virtual std::array<double, NDIM> get_force(std::size_t i) = 0;
         virtual void full_update(){};
         virtual void partial_update(){};
         virtual double get_interaction_lengthscale(std::size_t) {return INFINITY;}
         virtual double get_energy(std::size_t) = 0;
+        virtual double compute_interaction_timescale(std::size_t){return INFINITY;};
 };
 
 
@@ -28,13 +30,13 @@ class ForceContainer: public Force<NDIM>{
         std::vector<Force<NDIM>*> forces;
 
     public:
-        ForceContainer(KDTree<NDIM> &kdtree);
+        ForceContainer(KDTree<NDIM> &kdtree, std::vector<Particle<NDIM>> &particles);
         void register_force(Force<NDIM>*);
         std::array<double, NDIM> get_force(std::size_t i) override;
         void full_update() override;
         void partial_update() override;
-        double get_interaction_lengthscale(std::size_t) override;
         double get_energy(std::size_t) override;
+        double compute_interaction_timescale(std::size_t i) override;
 };
 
 
@@ -42,9 +44,11 @@ class ForceContainer: public Force<NDIM>{
 template<std::size_t NDIM>
 class KDTreeGravForce: public Force<NDIM>{
     public:
-        KDTreeGravForce(KDTree<NDIM> &kdtree);
+        KDTreeGravForce(KDTree<NDIM> &kdtree, std::vector<Particle<NDIM>> &particles);
         std::array<double, NDIM> get_force(std::size_t i) override;
         double get_energy(std::size_t i) override;
+        double compute_interaction_timescale(std::size_t) override;
+        double get_interaction_lengthscale(std::size_t) override;
 };
 
 
@@ -53,7 +57,6 @@ template<std::size_t NDIM>
 class ConstantGravForce: public Force<NDIM>{
     private:
         std::array<double, NDIM> f;
-        std::vector<Particle<NDIM>> &particles;
     public:
         ConstantGravForce(KDTree<NDIM> &kdtree, std::vector<Particle<NDIM>> &particles, std::array<double, NDIM> f);
         std::array<double, NDIM> get_force(std::size_t i) override;
