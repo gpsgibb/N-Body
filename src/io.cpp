@@ -60,6 +60,24 @@ void Writer<NDIM>::write() {
     }
     create_dataset("kinetic_energy", doublebuf, file);
 
+    // dataset for density
+    for (std::size_t i=0;i<n;i++){
+        doublebuf[i] = state.particles[i].density;
+    }
+    create_dataset("density", doublebuf, file);
+
+    // dataset for pressure
+    for (std::size_t i=0;i<n;i++){
+        doublebuf[i] = state.particles[i].pressure;
+    }
+    create_dataset("pressure", doublebuf, file);
+
+    // dataset for smoothing_length
+    for (std::size_t i=0;i<n;i++){
+        doublebuf[i] = state.particles[i].smoothing_length;
+    }
+    create_dataset("smoothing_length", doublebuf, file);
+
     // dataset for tag
     for (std::size_t i=0;i<n;i++){
         intbuf[i] = state.particles[i].tag;
@@ -204,6 +222,24 @@ State<NDIM> Reader<NDIM>::read(std::string filename){
     read_dataset("kinetic_energy", doublebuff, file);
     for (std::size_t i=0;i<n;i++){
         state.particles[i].kinetic_energy = doublebuff[i];
+    }
+
+    // read density
+    read_dataset("density", doublebuff, file);
+    for (std::size_t i=0;i<n;i++){
+        state.particles[i].density = doublebuff[i];
+    }
+
+    // read pressure
+    read_dataset("pressure", doublebuff, file);
+    for (std::size_t i=0;i<n;i++){
+        state.particles[i].pressure = doublebuff[i];
+    }
+
+    // read smoothing length
+    read_dataset("smoothing_length", doublebuff, file);
+    for (std::size_t i=0;i<n;i++){
+        state.particles[i].smoothing_length = doublebuff[i];
     }
 
     // read tag
