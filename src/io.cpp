@@ -139,7 +139,7 @@ template<std::size_t NDIM>
 State<NDIM> Reader<NDIM>::read(std::string filename){
 
     if (!std::filesystem::exists(filename)){
-        std::cerr << "Input file " << filename << " cannot be read. Please ensure it exists and is readable" << std::endl;
+        std::cerr << "Input file " << filename << " does not exist" << std::endl;
         std::exit(1);
     }
 
