@@ -12,6 +12,9 @@ class State:
     acc: np.ndarray
     pe: np.ndarray
     ke: np.ndarray
+    density: np.ndarray
+    pressure: np.ndarray
+    smoothing_length: np.ndarray
     tag: np.ndarray
     ndim: int
     iteration: int = 0
@@ -33,11 +36,14 @@ class State:
             pe = h["potential_energy"][:]
             mass = h["mass"][:]
             ke = h["kinetic_energy"][:]
+            density = h["density"][:]
+            pressure = h["pressure"][:]
+            smoothing_length = h["smoothing_length"][:]
             tag = h["tag"][:]
 
         print(f"Read state from {filename}")
 
-        return State(mass, pos, vel, acc, pe, ke, tag, ndim, iteration, time, name)
+        return State(mass, pos, vel, acc, pe, ke, density, pressure, smoothing_length, tag, ndim, iteration, time, name)
 
     @classmethod
     def empty(cls, n, ndim=3):
@@ -50,9 +56,13 @@ class State:
         pos = np.zeros((n, ndim), dtype=np.float64)
         vel = np.zeros((n, ndim), dtype=np.float64)
         acc = np.zeros((n, ndim), dtype=np.float64)
+        density = np.zeros((n, ndim), dtype=np.float64)
+        pressure = np.zeros((n, ndim), dtype=np.float64)
+        smoothing_length = np.zeros((n, ndim), dtype=np.float64)
+
         tag = np.zeros(n, dtype=np.int32)
 
-        return cls(mass, pos, vel, acc, pe, ke, tag, ndim, iteration, time)
+        return cls(mass, pos, vel, acc, pe, ke, density, pressure, smoothing_length, tag, ndim, iteration, time)
 
     def write(self, filename=None):
         if filename is None:
@@ -70,6 +80,9 @@ class State:
             h.create_dataset("mass", data=self.mass)
             h.create_dataset("potential_energy", data=self.pe)
             h.create_dataset("kinetic_energy", data=self.ke)
+            h.create_dataset("density", data=self.density)
+            h.create_dataset("pressure", data=self.pressure)
+            h.create_dataset("smoothing_length", data=self.smoothing_length)
             h.create_dataset("tag", data=self.tag.astype(np.int32))
 
         print(f"Written state to {filename}")
@@ -98,6 +111,9 @@ class State:
         state.acc = np.vstack((self.acc, other.acc))
         state.pe = np.hstack((self.pe, other.pe))
         state.ke = np.hstack((self.ke, other.ke))
+        state.density = np.hstack((self.density, other.density))
+        state.pressure = np.hstack((self.pressure, other.pressure))
+        state.smoothing_length = np.hstack((self.smoothing_length, other.smoothing_length))
         state.tag = np.hstack((self.tag, other.tag))
         state.name = self.name
         state.time = self.time
