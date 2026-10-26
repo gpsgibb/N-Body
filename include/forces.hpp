@@ -13,7 +13,7 @@ class Force{
         KDTree<NDIM> &kdtree;
     public:
         Force(KDTree<NDIM> &kdtree): kdtree(kdtree) {};
-        virtual std::array<double, NDIM> get_force(std::size_t i);
+        virtual std::array<double, NDIM> get_force(std::size_t i) = 0;
         virtual void full_update(){};
         virtual void partial_update(){};
         virtual double get_interaction_lengthscale(std::size_t) {return INFINITY;}
