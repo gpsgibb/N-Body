@@ -16,7 +16,7 @@ class Force{
         Force(KDTree<NDIM> &kdtree, std::vector<Particle<NDIM>> &particles): kdtree(kdtree), particles(particles){};
         virtual std::array<double, NDIM> get_force(std::size_t i) = 0;
         virtual void full_update(){};
-        virtual void partial_update(){};
+        virtual void partial_update(std::vector<std::size_t>&){};
         virtual double get_interaction_lengthscale(std::size_t) {return INFINITY;}
         virtual double get_energy(std::size_t) = 0;
         virtual double compute_interaction_timescale(std::size_t){return INFINITY;};
@@ -34,7 +34,7 @@ class ForceContainer: public Force<NDIM>{
         void register_force(Force<NDIM>*);
         std::array<double, NDIM> get_force(std::size_t i) override;
         void full_update() override;
-        void partial_update() override;
+        void partial_update(std::vector<std::size_t> &inds) override;
         double get_energy(std::size_t) override;
         double compute_interaction_timescale(std::size_t i) override;
 };

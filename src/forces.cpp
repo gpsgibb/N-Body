@@ -35,10 +35,10 @@ void ForceContainer<NDIM>::full_update(){
 
 
 template<std::size_t NDIM>
-void ForceContainer<NDIM>::partial_update(){
+void ForceContainer<NDIM>::partial_update(std::vector<std::size_t> &inds){
     this->kdtree.update();
     for (Force<NDIM> *force: forces){
-        force->partial_update();
+        force->partial_update(inds);
     }
 }
 

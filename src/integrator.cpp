@@ -313,9 +313,6 @@ void BlockTimestepIntegrator<NDIM>::_step(double dt){
             }
         }
 
-        // Do we want this?
-        this -> force.partial_update();
-
         // get indices of active particles
         std::vector<std::size_t> inds;
         inds.reserve(n);
@@ -323,6 +320,9 @@ void BlockTimestepIntegrator<NDIM>::_step(double dt){
             bool active = (step % int(pow(2, maxdepth-depths[i]))) == 0;
             if (active) inds.push_back(i);
         }
+
+        // Do any updates needed by the force class on the active particles
+        this -> force.partial_update(inds);
 
         // Now identify particles to be updated on this step
         int maxdepthnew = maxdepth;

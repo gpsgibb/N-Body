@@ -1,7 +1,8 @@
 #ifndef SPH_H
 #define SPH_H
 
-#include <array>
+#include "forces.hpp"
+#include "config.hpp"
 
 // SPH kernels
 
@@ -80,6 +81,24 @@ class IdealGasEOS: public SPHEquationOfState{
         const double rho0;
         const double gamma;
         const double k;
+};
+
+
+template<std::size_t NDIM>
+class SPHForce{
+    protected:
+        KDTree<NDIM> &kdtree;
+        std::vector<Particle<NDIM>> &particles;
+        SPHKernel<NDIM> &kernel;
+        SPHEquationOfState &eos;
+        double smoothing_length;
+    public:
+        SPHForce(KDTree<NDIM> &kdtree, std::vector<Particle<NDIM>> &particles, SPHKernel<NDIM> &kernel, SPHEquationOfState &eos, Config &config);
+        std::array<double, NDIM> get_force(std::size_t i) override;
+        void full_update() override;
+        void partial_update(std::vector<std::size_t> &inds) override;
+        double get_energy(std::size_t) override;
+        double compute_interaction_timescale(std::size_t) override;
 };
 
 
