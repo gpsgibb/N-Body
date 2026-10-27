@@ -16,6 +16,7 @@ class Writer{
     public:
         Writer(State<NDIM> &state);
         void write();
+        void write(std::string filename);
     private:
         void create_dataset(std::string dataset_name, std::vector<double> &buf,  H5::H5File file);
         void create_dataset(std::string dataset_name, std::vector<int> &buf,  H5::H5File file);
