@@ -48,7 +48,7 @@ class KDTree{
         void reorder_particles();
         void update();
         double potential_energy(std::size_t i);
-        std::vector<std::size_t> ball_search(std::size_t i, double r, std::size_t nneighbour_guess=50);
+        std::vector<Neighbour> ball_search(std::size_t i, double r, std::size_t nneighbour_guess=50);
         std::vector<Neighbour> k_nearest_neighbours(std::size_t i, std::size_t k);
 
     private:
@@ -57,7 +57,7 @@ class KDTree{
         double nearest_neighbour_from_node(std::size_t node_idx, std::size_t par_idx, double mindist);
         void update_node(std::size_t node_idx);
         double potential_energy_from_node(std::size_t node_idx, std::size_t par_idx);
-        void ball_search_node(std::size_t node_idx, std::size_t i, double r, std::vector<std::size_t> &inds);
+        void ball_search_node(std::size_t node_idx, std::size_t i, double r, std::vector<Neighbour> &neighbours);
         void k_nearest_neighbours_for_node(std::size_t node_idx, std::size_t i, std::size_t k,std::vector<Neighbour> &neighbourlist);
 };
 
