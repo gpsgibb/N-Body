@@ -80,12 +80,14 @@ WendlandKernel<NDIM>::WendlandKernel(){
 
 template<std::size_t NDIM>
 double WendlandKernel<NDIM>::kernel_function(double q){
+    if (q > 2) return 0.0;
     return pow(1 - 0.5*q, 4) * (2*q + 1);
 }
 
 
 template<std::size_t NDIM>
 double WendlandKernel<NDIM>::kernel_function_deriv(double q){
+    if (q > 2) return 0.0;
     return 4 * pow(1 - 0.5*q, 3) * (2*q + 1) + 2 * pow(1 - 0.5*q, 4);
 }
 
@@ -122,3 +124,115 @@ double IdealGasEOS::get_soundspeed(double rho){
     return sqrt(gamma * pow(rho, gamma-1));
 }
 
+
+// SPH force
+
+template<std::size_t NDIM>
+SPHForce<NDIM>::SPHForce(KDTree<NDIM> &kdtree, std::vector<Particle<NDIM>> &particles, SPHKernel<NDIM> &kernel, SPHEquationOfState &eos, Config &config): Force<NDIM>(kdtree, particles), kernel(kernel), eos(eos){
+    smoothing_length = config.get<double>("sph", "smoothing_length");
+    n_neighbours = config.get<int>("sph", "n_neighbours");
+
+    // recompute smoothing length, densities and pressures
+    full_update();
+
+}
+
+
+template<std::size_t NDIM>
+std::array<double, NDIM> SPHForce<NDIM>::get_force(std::size_t i){
+    std::cout << "Force not implemented" << std::endl;
+    return std::array<double, NDIM>{};
+}
+
+template<std::size_t NDIM>
+void SPHForce<NDIM>::full_update(){
+    this->kdtree.construct_tree();
+
+    // update smoothing length
+    if (!smoothing_length){
+        #pragma omp parallel for
+        for (std::size_t i=0;i<this->particles.size();i++){
+            std::vector<Neighbour> neighbours = this->kdtree.k_nearest_neighbours(i, n_neighbours);
+            // note: neighbours is sorted so the last element will be the furthest away
+            this->particles[i].smoothing_length = neighbours.back().r / 2;
+        }
+    }
+
+    // compute densities
+    #pragma omp parallel for
+    for (std::size_t i=0;i<this->particles.size();i++){
+        Particle<NDIM> &par = this->particles[i];
+        // remember to include self in the density computation
+        par.density = par.mass * kernel.evaluate(0, par.smoothing_length);
+        std::vector<Neighbour> neighbours = this->kdtree.ball_search(i, 2*par.smoothing_length, n_neighbours);
+        for (Neighbour neighbour: neighbours){
+            Particle<NDIM> &other = this->particles[neighbour.ind];
+            // use h as the mean of particle's h and other h
+            par.density += other.mass * kernel.evaluate(neighbour.r, (par.smoothing_length+other.smoothing_length)/2);
+        }
+    }
+
+    //compute pressure
+    #pragma omp parallel for
+    for (Particle<NDIM> &par: this->particles){
+        par.pressure = eos.get_pressure(par.density);
+    }
+
+
+}
+
+template<std::size_t NDIM>
+void SPHForce<NDIM>::partial_update(std::vector<long unsigned int> &inds){
+
+    std::vector<double> old_densities;
+
+    if (!smoothing_length){
+        old_densities.reserve(inds.size());
+        for (std::size_t i: inds){
+            old_densities.push_back(this->particles[i].density);
+        }
+    }
+
+    // compute densities
+    #pragma omp parallel for
+    for (std::size_t i: inds){
+        Particle<NDIM> &par = this->particles[i];
+        // remember to include self in the density computation
+        par.density = par.mass * kernel.evaluate(0, par.smoothing_length);
+        std::vector<Neighbour> neighbours = this->kdtree.ball_search(i, 2*par.smoothing_length, n_neighbours);
+        for (Neighbour neighbour: neighbours){
+            Particle<NDIM> &other = this->particles[neighbour.ind];
+            // use h as the mean of particle's h and other h
+            par.density += other.mass * kernel.evaluate(neighbour.r, (par.smoothing_length+other.smoothing_length)/2);
+        }
+    }
+
+    // compute update to smoothing_length
+    if (!smoothing_length){
+        for (double i: inds){
+            this->particles[i].density *= pow(this->particles[i].density / old_densities[i], 1.0/NDIM);
+        }
+    }
+
+    //compute pressure
+    #pragma omp parallel for
+    for (std::size_t i: inds){
+        Particle<NDIM> &par = this->particles[i];
+        par.pressure = eos.get_pressure(par.density);
+    }
+
+
+}
+
+template<std::size_t NDIM>
+double SPHForce<NDIM>::get_energy(std::size_t i){
+    return 0.0;
+};
+
+template<std::size_t NDIM>
+double SPHForce<NDIM>::compute_interaction_timescale(std::size_t){
+    return 0.0;
+}
+
+template class SPHForce<2>;
+template class SPHForce<3>;

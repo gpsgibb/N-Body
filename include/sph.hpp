@@ -85,13 +85,12 @@ class IdealGasEOS: public SPHEquationOfState{
 
 
 template<std::size_t NDIM>
-class SPHForce{
+class SPHForce: Force<NDIM>{
     protected:
-        KDTree<NDIM> &kdtree;
-        std::vector<Particle<NDIM>> &particles;
         SPHKernel<NDIM> &kernel;
         SPHEquationOfState &eos;
         double smoothing_length;
+        int n_neighbours;
     public:
         SPHForce(KDTree<NDIM> &kdtree, std::vector<Particle<NDIM>> &particles, SPHKernel<NDIM> &kernel, SPHEquationOfState &eos, Config &config);
         std::array<double, NDIM> get_force(std::size_t i) override;
