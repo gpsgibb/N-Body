@@ -9,8 +9,12 @@ Writer<NDIM>::Writer(State<NDIM> &s): state(s) {
 
 template<std::size_t NDIM>
 void Writer<NDIM>::write() {
+    write(get_filename(state.name));
+}
 
-    std::string filename = get_filename(state.name);
+
+template<std::size_t NDIM>
+void Writer<NDIM>::write(std::string filename) {
 
     H5::H5File file(filename, H5F_ACC_TRUNC);
 
@@ -93,7 +97,7 @@ void Writer<NDIM>::write() {
 
 template<std::size_t NDIM>
 void Writer<NDIM>::create_dataset(std::string dataset_name, std::vector<std::array<double, NDIM>> &buf, H5::H5File file) {
-    hsize_t dims[2] = {n, 3};
+    hsize_t dims[2] = {n, NDIM};
     H5::DataSpace space(2, dims);
     H5::DataSet dataset = file.createDataSet(dataset_name, H5::PredType::NATIVE_DOUBLE, space);
     dataset.write(buf.data(), H5::PredType::NATIVE_DOUBLE);

@@ -539,19 +539,19 @@ void KDTree<NDIM>::save_tree(std::string filename){
 
 // Return indices of particles a maximum distance of r from particle i
 template<std::size_t NDIM>
-std::vector<std::size_t> KDTree<NDIM>::ball_search(std::size_t i, double r, std::size_t nneighbour_guess){
-    std::vector<std::size_t> inds;
-    inds.reserve(nneighbour_guess);
+std::vector<Neighbour> KDTree<NDIM>::ball_search(std::size_t i, double r, std::size_t nneighbour_guess){
+    std::vector<Neighbour> neighbours;
+    neighbours.reserve(nneighbour_guess);
 
-    ball_search_node(0, i, r, inds);
+    ball_search_node(0, i, r, neighbours);
 
-    return inds;
+    return neighbours;
 }
 
 
 // search for neighbours closer than r to object i inside node node_idx
 template<std::size_t NDIM>
-void KDTree<NDIM>::ball_search_node(std::size_t node_idx, std::size_t i, double r, std::vector<std::size_t> &inds){
+void KDTree<NDIM>::ball_search_node(std::size_t node_idx, std::size_t i, double r, std::vector<Neighbour> &neighbours){
     std::array<double, NDIM> pos = particles[i].pos;
     TreeNode<NDIM> node = nodes[node_idx];
 
@@ -565,12 +565,12 @@ void KDTree<NDIM>::ball_search_node(std::size_t node_idx, std::size_t i, double 
         for (std::size_t k=0;k<NDIM;k++){
             distsq += pow(pos[k] - particles[node.idx].pos[k], 2);
         }
-        if (distsq <= r*r) inds.push_back(node.idx);
+        if (distsq <= r*r) neighbours.push_back(Neighbour{node.idx, sqrt(distsq)});
     }
 
     // search children
-    if (node.lower >= 0) ball_search_node(node.lower, i, r, inds);
-    if (node.upper >=0 ) ball_search_node(node.upper, i, r, inds);
+    if (node.lower >= 0) ball_search_node(node.lower, i, r, neighbours);
+    if (node.upper >=0 ) ball_search_node(node.upper, i, r, neighbours);
 
 }
 
