@@ -145,6 +145,13 @@ SPHForce<NDIM>::SPHForce(KDTree<NDIM> &kdtree, std::vector<Particle<NDIM>> &part
     smoothing_length = config.get<double>("sph", "smoothing_length");
     n_neighbours = config.get<int>("sph", "n_neighbours");
 
+    // fix smoothing length
+    if (smoothing_length){
+        for (Particle<NDIM> &par: this->particles){
+            par.smoothing_length = smoothing_length;
+        }
+    }
+
     // recompute smoothing length, densities and pressures
     full_update();
 
