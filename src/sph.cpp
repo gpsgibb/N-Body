@@ -125,7 +125,7 @@ double IsothermalEOS::get_energy(double rho){
 }
 
 
-IdealGasEOS::IdealGasEOS(double rho0, double gamma, double k): rho0(rho0), gamma(gamma), k(k){}
+IdealGasEOS::IdealGasEOS(double gamma, double k): gamma(gamma), k(k){}
 double IdealGasEOS::get_pressure(double rho){
     return k * pow(rho, gamma);
 }
@@ -245,8 +245,8 @@ void SPHForce<NDIM>::partial_update(std::vector<long unsigned int> &inds){
 
     // compute update to smoothing_length
     if (!smoothing_length){
-        for (double i: inds){
-            this->particles[i].density *= pow(this->particles[i].density / old_densities[i], -1.0/NDIM);
+        for (std::size_t i=0;i<inds.size();i++){
+            this->particles[inds[i]].density *= pow(this->particles[inds[i]].density / old_densities[i], -1.0/NDIM);
         }
     }
 

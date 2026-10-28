@@ -77,19 +77,18 @@ class IsothermalEOS: public SPHEquationOfState{
 
 class IdealGasEOS: public SPHEquationOfState{
     public:
-        IdealGasEOS(double rho0, double gamma, double k);
+        IdealGasEOS(double gamma, double k=1.0);
         double get_pressure(double rho) override;
         double get_soundspeed(double rho) override;
         double get_energy(double rho) override;
     private:
-        const double rho0;
         const double gamma;
         const double k;
 };
 
 
 template<std::size_t NDIM>
-class SPHForce: Force<NDIM>{
+class SPHForce: public Force<NDIM>{
     protected:
         SPHKernel<NDIM> &kernel;
         SPHEquationOfState &eos;
