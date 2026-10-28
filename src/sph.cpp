@@ -105,6 +105,9 @@ double TaitEOS::get_pressure(double rho){
 double TaitEOS::get_soundspeed(double rho){
     return cs*pow(rho/rho0, (gamma-1)/2);
 }
+double TaitEOS::get_energy(double rho){
+    return rho0*cs*cs/gamma/(gamma-1) * (pow(rho/rho0, gamma-1) -1);
+}
 
 IsothermalEOS::IsothermalEOS(double rho0, double cs): rho0(rho0), cs(cs){}
 double IsothermalEOS::get_pressure(double rho){
@@ -114,6 +117,11 @@ double IsothermalEOS::get_soundspeed(double rho){
     (void) rho;
     return cs;
 }
+double IsothermalEOS::get_energy(double rho){
+    // system is isothermal so no energy
+    (void) rho;
+    return 0;
+}
 
 
 IdealGasEOS::IdealGasEOS(double rho0, double gamma, double k): rho0(rho0), gamma(gamma), k(k){}
@@ -122,6 +130,10 @@ double IdealGasEOS::get_pressure(double rho){
 }
 double IdealGasEOS::get_soundspeed(double rho){
     return sqrt(gamma * pow(rho, gamma-1));
+}
+double IdealGasEOS::get_energy(double rho){
+    double pressure = get_pressure(rho);
+    return pressure / (1-gamma)/rho;
 }
 
 
@@ -249,7 +261,11 @@ void SPHForce<NDIM>::partial_update(std::vector<long unsigned int> &inds){
 
 template<std::size_t NDIM>
 double SPHForce<NDIM>::get_energy(std::size_t i){
-    return 0.0;
+    Particle<NDIM> &par = this->particles[i];
+    double u = eos.get_energy(par.density);
+
+    // This is the energy per unit mass so multiply by the particle mass
+    return u * par.mass;
 };
 
 
