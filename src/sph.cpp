@@ -98,7 +98,12 @@ template class WendlandKernel<3>;
 
 // Equations of state
 
-TaitEOS::TaitEOS(double rho0, double gamma, double cs): rho0(rho0), gamma(gamma), cs(cs){}
+TaitEOS::TaitEOS(double rho0, double gamma, double cs): rho0(rho0), gamma(gamma), cs(cs){
+    if (gamma == 1){
+        std::cerr << "Tait EOS cannot have gamma=1" << std::endl;
+        std::exit(1);
+    }
+}
 double TaitEOS::get_pressure(double rho){
     return rho0*cs*cs/gamma * (pow(rho/rho0, gamma) - 1);
 }
@@ -125,7 +130,12 @@ double IsothermalEOS::get_energy(double rho){
 }
 
 
-IdealGasEOS::IdealGasEOS(double gamma, double k): gamma(gamma), k(k){}
+IdealGasEOS::IdealGasEOS(double gamma, double k): gamma(gamma), k(k){
+    if (gamma == 1){
+        std::cerr << "Ideal gas EOS cannot have gamma=1" << std::endl;
+        std::exit(1);
+    }
+}
 double IdealGasEOS::get_pressure(double rho){
     return k * pow(rho, gamma);
 }
