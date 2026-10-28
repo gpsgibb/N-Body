@@ -134,7 +134,7 @@ double IdealGasEOS::get_soundspeed(double rho){
 }
 double IdealGasEOS::get_energy(double rho){
     double pressure = get_pressure(rho);
-    return pressure / (1-gamma)/rho;
+    return k*pressure / (1-gamma)/rho;
 }
 
 
