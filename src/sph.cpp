@@ -109,6 +109,7 @@ double TaitEOS::get_energy(double rho){
     return rho0*cs*cs/gamma/(gamma-1) * (pow(rho/rho0, gamma-1) -1);
 }
 
+
 IsothermalEOS::IsothermalEOS(double rho0, double cs): rho0(rho0), cs(cs){}
 double IsothermalEOS::get_pressure(double rho){
     return cs*cs*(rho-rho0);
@@ -155,6 +156,7 @@ std::array<double, NDIM> SPHForce<NDIM>::get_force(std::size_t i){
     std::array<double, NDIM> force{0};
     Particle<NDIM> &par = this->particles[i];
 
+    // TODO: Should we increase the search radius here to minimise mismatches of pairs with different smoothing lengths?
     std::vector<Neighbour> neighbours = this->kdtree.ball_search(i, 2*par.smoothing_length, n_neighbours);
     for (Neighbour neighbour: neighbours){
         Particle<NDIM> &other = this->particles[neighbour.ind];
