@@ -88,7 +88,7 @@ double WendlandKernel<NDIM>::kernel_function(double q){
 template<std::size_t NDIM>
 double WendlandKernel<NDIM>::kernel_function_deriv(double q){
     if (q > 2) return 0.0;
-    return 4 * pow(1 - 0.5*q, 3) * (2*q + 1) + 2 * pow(1 - 0.5*q, 4);
+    return -2 * pow(1 - 0.5*q, 3) * (2*q + 1) + 2 * pow(1 - 0.5*q, 4);
 }
 
 
@@ -140,9 +140,33 @@ SPHForce<NDIM>::SPHForce(KDTree<NDIM> &kdtree, std::vector<Particle<NDIM>> &part
 
 template<std::size_t NDIM>
 std::array<double, NDIM> SPHForce<NDIM>::get_force(std::size_t i){
-    std::cout << "Force not implemented" << std::endl;
-    return std::array<double, NDIM>{};
+    std::array<double, NDIM> force{0};
+    Particle<NDIM> &par = this->particles[i];
+
+    std::vector<Neighbour> neighbours = this->kdtree.ball_search(i, 2*par.smoothing_length, n_neighbours);
+    for (Neighbour neighbour: neighbours){
+        Particle<NDIM> &other = this->particles[neighbour.ind];
+
+        std::array<double, NDIM> rvec{};
+        for (std::size_t k=0;k<NDIM;k++){
+            rvec[k] = par.pos[k] - other.pos[k];
+        }
+
+        // compute gradient with smoothing length set to the mean of the smoothing length between the pair
+        std::array<double, NDIM> grad{};
+        grad = kernel.evaluate_gradiant(rvec, (par.smoothing_length + other.smoothing_length)/2);
+
+        for (std::size_t k=0;k<NDIM;k++){
+            grad[k] *= other.mass;
+            grad[k] *= par.pressure / pow(par.density, 2) + other.pressure / pow(other.density, 2);
+            // f = -grad(p) so we need a minus sign here
+            force[k] -= grad[k];
+        }
+    }
+
+    return force;
 }
+
 
 template<std::size_t NDIM>
 void SPHForce<NDIM>::full_update(){
@@ -167,8 +191,7 @@ void SPHForce<NDIM>::full_update(){
         std::vector<Neighbour> neighbours = this->kdtree.ball_search(i, 2*par.smoothing_length, n_neighbours);
         for (Neighbour neighbour: neighbours){
             Particle<NDIM> &other = this->particles[neighbour.ind];
-            // use h as the mean of particle's h and other h
-            par.density += other.mass * kernel.evaluate(neighbour.r, (par.smoothing_length+other.smoothing_length)/2);
+            par.density += other.mass * kernel.evaluate(neighbour.r, par.smoothing_length);
         }
     }
 
@@ -178,8 +201,8 @@ void SPHForce<NDIM>::full_update(){
         par.pressure = eos.get_pressure(par.density);
     }
 
-
 }
+
 
 template<std::size_t NDIM>
 void SPHForce<NDIM>::partial_update(std::vector<long unsigned int> &inds){
@@ -202,15 +225,14 @@ void SPHForce<NDIM>::partial_update(std::vector<long unsigned int> &inds){
         std::vector<Neighbour> neighbours = this->kdtree.ball_search(i, 2*par.smoothing_length, n_neighbours);
         for (Neighbour neighbour: neighbours){
             Particle<NDIM> &other = this->particles[neighbour.ind];
-            // use h as the mean of particle's h and other h
-            par.density += other.mass * kernel.evaluate(neighbour.r, (par.smoothing_length+other.smoothing_length)/2);
+            par.density += other.mass * kernel.evaluate(neighbour.r, par.smoothing_length);
         }
     }
 
     // compute update to smoothing_length
     if (!smoothing_length){
         for (double i: inds){
-            this->particles[i].density *= pow(this->particles[i].density / old_densities[i], 1.0/NDIM);
+            this->particles[i].density *= pow(this->particles[i].density / old_densities[i], -1.0/NDIM);
         }
     }
 
@@ -224,15 +246,19 @@ void SPHForce<NDIM>::partial_update(std::vector<long unsigned int> &inds){
 
 }
 
+
 template<std::size_t NDIM>
 double SPHForce<NDIM>::get_energy(std::size_t i){
     return 0.0;
 };
 
+
 template<std::size_t NDIM>
-double SPHForce<NDIM>::compute_interaction_timescale(std::size_t){
-    return 0.0;
+double SPHForce<NDIM>::compute_interaction_timescale(std::size_t i){
+    Particle<NDIM> &par = this->particles[i];
+    return par.smoothing_length / eos.get_soundspeed(par.density);
 }
+
 
 template class SPHForce<2>;
 template class SPHForce<3>;
