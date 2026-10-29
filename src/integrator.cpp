@@ -26,6 +26,7 @@ template<std::size_t NDIM>
 void Integrator<NDIM>::step(){
     _step(dt);
     compute_energy();
+    inactivate_particles();
 }
 
 
@@ -91,6 +92,7 @@ double Integrator<NDIM>::get_min_timestep(){
 // inactivate particles if they have moved too far from the origin
 template<std::size_t NDIM>
 void Integrator<NDIM>::inactivate_particles(){
+    int n_deac = 0;
     for (Particle<NDIM> &par: state.particles){
         if (par.inactive) continue;
 
@@ -99,8 +101,16 @@ void Integrator<NDIM>::inactivate_particles(){
             rsq += par.pos[k]*par.pos[k];
         }
 
-        if (rsq > inactivate_dist*inactivate_dist) par.inactive = 1;
+        if (rsq > inactivate_dist*inactivate_dist) {
+            par.inactive = 1;
+            for (std::size_t k=0;k<NDIM;k++){
+                par.vel[k] = 0.0;
+            }
+            n_deac +=1;
+        }
     }
+
+    if (n_deac) std::cout << "Deactivated " << n_deac << " Particles" << std::endl;
 }
 
 
@@ -210,6 +220,7 @@ void AdaptiveTimestepEulerIntegrator<NDIM>::step(){
 
     }
     std::cout << "Number of sub-timesteps = " << n_steps << std::endl;
+    this -> inactivate_particles();
 }
 
 
@@ -254,6 +265,7 @@ void AdaptiveTimestepVelocityVerletIntegrator<NDIM>::step(){
 
     }
     std::cout << "Number of sub-timesteps = " << n_steps << std::endl;
+    this -> inactivate_particles();
 }
 
 
@@ -383,6 +395,7 @@ void BlockTimestepIntegrator<NDIM>::_step(double dt){
     }
 
     std::cout << "Number of minor timesteps " << nsteps << std::endl;
+    this -> inactivate_particles();
 
     std::map<int, int> stepdict;
     for (int d=0;d<=maxdepth;d++){
