@@ -16,6 +16,7 @@ class State:
     pressure: np.ndarray
     smoothing_length: np.ndarray
     tag: np.ndarray
+    inactive: np.ndarray
     ndim: int
     iteration: int = 0
     time: float = 0.0
@@ -40,10 +41,11 @@ class State:
             pressure = h["pressure"][:]
             smoothing_length = h["smoothing_length"][:]
             tag = h["tag"][:]
+            inactive = h["inactive"][:]
 
         print(f"Read state from {filename}")
 
-        return State(mass, pos, vel, acc, pe, ke, density, pressure, smoothing_length, tag, ndim, iteration, time, name)
+        return State(mass, pos, vel, acc, pe, ke, density, pressure, smoothing_length, tag, inactive, ndim, iteration, time, name)
 
     @classmethod
     def empty(cls, n, ndim=3):
@@ -61,8 +63,9 @@ class State:
         smoothing_length = np.zeros((n, ndim), dtype=np.float64)
 
         tag = np.zeros(n, dtype=np.int32)
+        inactive = np.zeros(n, dtype=np.int32)
 
-        return cls(mass, pos, vel, acc, pe, ke, density, pressure, smoothing_length, tag, ndim, iteration, time)
+        return cls(mass, pos, vel, acc, pe, ke, density, pressure, smoothing_length, tag, inactive, ndim, iteration, time)
 
     def write(self, filename=None):
         if filename is None:
@@ -84,6 +87,7 @@ class State:
             h.create_dataset("pressure", data=self.pressure)
             h.create_dataset("smoothing_length", data=self.smoothing_length)
             h.create_dataset("tag", data=self.tag.astype(np.int32))
+            h.create_dataset("inactive", data=self.inactive.astype(np.int32))
 
         print(f"Written state to {filename}")
 
@@ -115,6 +119,7 @@ class State:
         state.pressure = np.hstack((self.pressure, other.pressure))
         state.smoothing_length = np.hstack((self.smoothing_length, other.smoothing_length))
         state.tag = np.hstack((self.tag, other.tag))
+        state.inactive = np.hstack((self.inactive, other.inactive))
         state.name = self.name
         state.time = self.time
         state.iteration = self.iteration
