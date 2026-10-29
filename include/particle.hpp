@@ -15,6 +15,7 @@ struct Particle{
     double pressure;
     double smoothing_length;
     int tag;
+    int inactive;
 };
 
 #endif
