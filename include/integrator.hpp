@@ -16,11 +16,13 @@ class Integrator{
         int smallest_timestep_ratio;
         State<NDIM> &state;
         Force<NDIM> &force;
+        double inactivate_dist;
 
     public:
         Integrator(State<NDIM> &s, Force<NDIM> &force, Config &config);
         virtual void step();
         void compute_energy();
+        void inactivate_particles();
 
     protected:
         virtual void _step(double dt) = 0;
