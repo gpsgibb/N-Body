@@ -105,6 +105,8 @@ double KDTreeGravForce<NDIM>::compute_interaction_timescale(std::size_t i){
 
     acc = sqrt(acc);
 
+    if (acc == 0) return INFINITY;
+
     return sqrt(r_interact / acc);
 
 }
