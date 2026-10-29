@@ -62,6 +62,7 @@ template<std::size_t NDIM>
 void Integrator<NDIM>::update_forces_for_all_particles(){
     #pragma omp parallel for
     for (std::size_t i=0;i<state.particles.size();i++){
+        if (state.particles[i].inactive) continue;
         state.particles[i].acc = force.get_force(i);
     }
 }
@@ -70,6 +71,7 @@ void Integrator<NDIM>::update_forces_for_all_particles(){
 // get the timestep for particle i
 template<std::size_t NDIM>
 double Integrator<NDIM>::timestep_for_particle(std::size_t i){
+    if (state.particles[i].inactive) return INFINITY;
     return eta * this->force.compute_interaction_timescale(i);
 }
 
@@ -127,6 +129,7 @@ void EulerIntegrator<NDIM>::_step(double dt){
     // v(t+dt) = v(t) + a(t)*dt
     // x(t+dt) = x(t) + v(t+dt)*dt
     for(Particle<NDIM> &par: particles){
+        if (par.inactive) continue;
         for(std::size_t k=0;k<NDIM;k++){
             par.vel[k] += par.acc[k]*dt;
             par.pos[k] += par.vel[k]*dt;
@@ -161,6 +164,7 @@ void VelocityVerletIntegrator<NDIM>::_step(double dt){
 
     // x(t+dt) = x(t) + v(t)*dt + 0.5*a(t)*dt^2 
     for(Particle<NDIM> &par: particles){
+        if (par.inactive) continue;
         for(std::size_t k=0;k<NDIM;k++){
             par.pos[k] += par.vel[k]*dt + 0.5*par.acc[k]*pow(dt, 2);
         }
@@ -172,6 +176,7 @@ void VelocityVerletIntegrator<NDIM>::_step(double dt){
 
     // v(t+dt) = v(t) + 0.5(a(t) + a(t+dt))
     for (std::size_t i=0;i<particles.size();i++){
+        if (this->state.particles[i].inactive) continue;
         for(std::size_t k=0;k<NDIM;k++){
             particles[i].vel[k] += 0.5*(particles[i].acc[k] + old_particles[i].acc[k])*dt;
         }
@@ -336,6 +341,8 @@ void BlockTimestepIntegrator<NDIM>::_step(double dt){
         for (std::size_t i=0;i<n;i++){
             // time since particle was last updated
             dt_i = t_now - lastt[i];
+
+            if (this->state.particles[i].inactive) continue;
             // x(t+dt) = x(t) + v(t)*dt + 0.5*a(t)*t**2
             for (std::size_t k=0;k<NDIM;k++){
                 this->state.particles[i].pos[k] = old_pars[i].pos[k] + old_pars[i].vel[k]*dt_i + 0.5*old_pars[i].acc[k]*pow(dt_i, 2);
@@ -346,6 +353,7 @@ void BlockTimestepIntegrator<NDIM>::_step(double dt){
         std::vector<std::size_t> inds;
         inds.reserve(n);
         for (std::size_t i=0;i<n;i++){
+            if (this->state.particles[i].inactive) continue;
             bool active = (step % int(pow(2, maxdepth-depths[i]))) == 0;
             if (active) inds.push_back(i);
         }
