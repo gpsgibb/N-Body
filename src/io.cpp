@@ -88,6 +88,12 @@ void Writer<NDIM>::write(std::string filename) {
     }
     create_dataset("tag", intbuf, file);
 
+    // dataset for tag
+    for (std::size_t i=0;i<n;i++){
+        intbuf[i] = state.particles[i].inactive;
+    }
+    create_dataset("inactive", intbuf, file);
+
     file.close();
 
     std::cout << "Written state to " << filename << std::endl;
@@ -250,6 +256,12 @@ State<NDIM> Reader<NDIM>::read(std::string filename){
     read_dataset("tag", intbuff, file);
     for (std::size_t i=0;i<n;i++){
         state.particles[i].tag = intbuff[i];
+    }
+
+    // read tag
+    read_dataset("inactive", intbuff, file);
+    for (std::size_t i=0;i<n;i++){
+        state.particles[i].inactive = intbuff[i];
     }
 
     file.close();
