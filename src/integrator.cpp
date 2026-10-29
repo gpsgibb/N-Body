@@ -10,6 +10,7 @@ Integrator<NDIM>::Integrator(State<NDIM> &s, Force<NDIM> &force, Config &config)
     eta = config.get<double>("integrator", "eta");
     max_allowed_depth = config.get<int>("integrator", "maxdepth");
     smallest_timestep_ratio = pow(2, max_allowed_depth);
+    inactivate_dist = config.get<double>("integrator", "inactivate_dist", INFINITY);
 
     // Compute force on all particles
     // This is because all integrators assume the initial state is pos(t), vel(t), acc(t)
@@ -84,6 +85,22 @@ double Integrator<NDIM>::get_min_timestep(){
     }
 
     return min_dt;
+}
+
+
+// inactivate particles if they have moved too far from the origin
+template<std::size_t NDIM>
+void Integrator<NDIM>::inactivate_particles(){
+    for (Particle<NDIM> &par: state.particles){
+        if (par.inactive) continue;
+
+        double rsq = 0.0;
+        for (std::size_t k=0;k<NDIM;k++){
+            rsq += par.pos[k]*par.pos[k];
+        }
+
+        if (rsq > inactivate_dist*inactivate_dist) par.inactive = 1;
+    }
 }
 
 
